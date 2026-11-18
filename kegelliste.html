@@ -1,0 +1,1277 @@
+<title>Kegelliste Die Umwerfenden</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#d93a2b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-screen app shell — sticky header, scrolling main, thumb-reach penalty dock, bottom tab bar. Lane-wood + signal-red (like the red amounts on the paper list). */
+:root{
+  --bg:#eceff5; --surface:#ffffff; --surface-2:#f4f6fa; --ink:#121827; --muted:#5a6377; --line:#d9dee8;
+  --accent:#d93a2b; --accent-ink:#ffffff; --accent-soft:#fbe3df;
+  --lane:#b9783f; --lane-soft:#f5e6d4;
+  --good:#1d8a57; --good-soft:#dcf2e6; --warn:#a86300; --warn-soft:#fbecd3;
+  --shadow:0 1px 2px rgba(18,24,39,.06),0 6px 18px rgba(18,24,39,.07);
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d111b; --surface:#171d2b; --surface-2:#1f2738; --ink:#edf0f7; --muted:#9aa4ba; --line:#2b3447;
+  --accent:#ff5d4c; --accent-ink:#1b0704; --accent-soft:#3e1d1a;
+  --lane:#e2a76d; --lane-soft:#3a2a1b;
+  --good:#4ccc8f; --good-soft:#163628; --warn:#f0a73a; --warn-soft:#3a2c14;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0d111b; --surface:#171d2b; --surface-2:#1f2738; --ink:#edf0f7; --muted:#9aa4ba; --line:#2b3447;
+  --accent:#ff5d4c; --accent-ink:#1b0704; --accent-soft:#3e1d1a;
+  --lane:#e2a76d; --lane-soft:#3a2a1b;
+  --good:#4ccc8f; --good-soft:#163628; --warn:#f0a73a; --warn-soft:#3a2c14;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{height:100%;box-sizing:border-box}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-variant-numeric:tabular-nums}
+
+.app{height:100%;display:flex;flex-direction:column}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);flex:none}
+header.top .in{display:flex;align-items:center;gap:12px;padding-block:10px;max-width:1200px;margin:0 auto}
+.logo{width:34px;height:34px;flex:none}
+.brand{min-width:0;flex:1}
+.brand b{display:block;font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:-.01em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--muted);font-size:12.5px}
+.icon-btn{border:1px solid var(--line);background:var(--surface-2);border-radius:12px;min-width:44px;height:44px;display:grid;place-items:center;font-size:18px}
+.sync{font-size:11.5px;color:var(--muted);text-align:right;line-height:1.2}
+.sync i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:5px;vertical-align:1px;font-style:normal}
+.sync i.off{background:var(--warn)}
+
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+main .in{max-width:1200px;margin:0 auto;padding-block:16px 28px;display:flex;flex-direction:column;gap:18px}
+
+nav.tabs{flex:none;background:var(--surface);border-top:1px solid var(--line)}
+nav.tabs .in{display:grid;grid-template-columns:repeat(4,1fr);max-width:640px;margin:0 auto}
+nav.tabs button{border:0;background:none;padding:8px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted);min-height:56px}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-current="page"]{color:var(--accent)}
+
+/* dock */
+.dock{flex:none;background:var(--surface);border-top:1px solid var(--line)}
+.dock .in{max-width:1200px;margin:0 auto;padding-block:10px}
+.dock-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:7px;display:flex;justify-content:space-between;gap:8px}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+@media (min-width:900px){.chips{flex-wrap:wrap;overflow:visible}}
+.pen{flex:none;border:2px solid var(--line);background:var(--surface-2);border-radius:14px;padding:8px 12px;display:flex;align-items:center;gap:8px;min-height:54px;text-align:left}
+.pen .e{font-size:22px;line-height:1}
+.pen .t{display:flex;flex-direction:column;line-height:1.15}
+.pen .t b{font-size:14px;white-space:nowrap}
+.pen .t span{font-size:12px;color:var(--muted);white-space:nowrap}
+.pen[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.pen[aria-pressed="true"] .t span{color:var(--accent)}
+
+/* generic */
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:21px;font-weight:800}
+h3{font-size:16px;font-weight:800}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;min-height:46px;padding:0 16px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.good{background:var(--good);border-color:var(--good);color:var(--surface)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--accent);border-color:var(--accent)}
+.btn.big{min-height:56px;font-size:17px;padding:0 22px}
+.btn:disabled{opacity:.5}
+.eyebrow{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700;background:var(--surface-2);border:1px solid var(--line)}
+.pill.good{background:var(--good-soft);color:var(--good);border-color:transparent}
+.pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.pill.bad{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.banner{border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn);font-weight:600;font-size:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+
+/* game */
+.gamebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.gamebar .d{display:flex;flex-direction:column}
+.gamebar .d b{font-family:var(--f-display);font-size:22px;font-weight:800}
+.lane-total{font-family:var(--f-display);font-weight:800;font-size:22px;color:var(--lane)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+@media (max-width:420px){.grid{grid-template-columns:repeat(2,1fr)}}
+.tile{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-shadow:var(--shadow);touch-action:manipulation;transition:transform .08s}
+.tile:active{transform:scale(.97)}
+.tile .n{font-weight:700;font-size:17px;line-height:1.15;padding-right:34px;overflow-wrap:anywhere}
+.tile .s{font-family:var(--f-display);font-weight:800;font-size:20px}
+.tile .b{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:22px}
+.tile .cnt{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 9px;font-weight:800;font-size:13px}
+.tile .more{position:absolute;top:6px;right:6px;width:36px;height:36px;border-radius:10px;border:0;background:var(--surface-2);color:var(--muted);font-size:18px;line-height:1}
+.tile .crown{position:absolute;top:-10px;left:10px;font-size:20px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.tile.bump{animation:bump .35s}
+@keyframes bump{30%{transform:scale(1.06) rotate(-1.5deg)}60%{transform:scale(.98) rotate(1deg)}}
+.tile{overflow:visible}
+.fx{position:absolute;pointer-events:none;z-index:3}
+.fx.float{right:12px;bottom:34px;font-weight:800;color:var(--accent);animation:floatup 1s ease-out forwards;font-size:16px}
+@keyframes floatup{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-38px)}}
+.fx.emo{left:50%;top:30%;font-size:34px;animation:emo 1.4s ease-out forwards;opacity:0}
+.fx.emo.big{font-size:46px}.fx.emo.small{font-size:20px}
+@keyframes emo{0%{opacity:0;transform:translate(-50%,10px) scale(.4)}20%{opacity:1;transform:translate(-50%,-10px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
+.fx.swing{animation:emo 1.4s ease-out forwards,swing .25s 5 alternate}
+@keyframes swing{from{rotate:-18deg}to{rotate:18deg}}
+.fx.cloud{left:50%;top:-22px;font-size:34px;transform:translateX(-50%);animation:cloud 2.2s ease-out forwards}
+@keyframes cloud{0%{opacity:0;top:-40px}15%{opacity:1;top:-22px}80%{opacity:1}100%{opacity:0}}
+.fx.drop{top:6px;font-size:14px;opacity:0;animation:drop .9s ease-in 2 forwards}
+@keyframes drop{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(70px)}}
+.fx.crawl{bottom:6px;left:-10px;font-size:24px;animation:crawl 2.4s linear forwards}
+@keyframes crawl{0%{left:-6px;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:calc(100% - 22px);opacity:0}}
+.fx.fly{left:30%;font-size:26px;animation:fly 1.3s ease-in forwards}
+@keyframes fly{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(120px,-90px) rotate(40deg)}}
+.fx.spark{top:-6px;font-size:18px;animation:emo 1.2s ease-out forwards}
+.tile.sad{animation:sad 2.2s ease-out}
+@keyframes sad{0%{filter:none}15%{transform:rotate(-2deg) translateY(4px);filter:grayscale(1) brightness(.85)}70%{transform:rotate(-2deg) translateY(4px);filter:grayscale(1) brightness(.85)}100%{transform:none;filter:none}}
+.tile.ring{animation:ring .5s}
+@keyframes ring{10%,50%,90%{transform:translateX(-4px) rotate(-1.5deg)}30%,70%{transform:translateX(4px) rotate(1.5deg)}}
+.tile.squash{animation:squash .5s}
+@keyframes squash{30%{transform:scale(1.08,.85)}60%{transform:scale(.95,1.06)}}
+.tile.hero{box-shadow:0 0 0 3px var(--lane),var(--shadow)}
+.banner-fx{position:fixed;left:50%;top:38%;z-index:70;transform:translate(-50%,-50%);font-family:var(--f-display);font-weight:800;font-size:clamp(40px,10vw,96px);color:var(--accent);text-shadow:0 4px 0 var(--lane),0 10px 30px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap;display:flex;gap:14px;align-items:center;animation:bannerIn 1.8s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes bannerIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-8deg)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.05) rotate(2deg)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(1.1)}}
+.absent{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.absent button{border:1px dashed var(--line);background:none;border-radius:999px;padding:6px 12px;font-size:13.5px;min-height:36px}
+
+/* start */
+.att{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.att button{border:2px solid var(--line);border-radius:14px;background:var(--surface);min-height:58px;padding:8px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.att button b{font-size:16px}
+.att button span{font-size:12.5px;font-weight:700}
+.att .present{border-color:var(--good);background:var(--good-soft)} .att .present span{color:var(--good)}
+.att .excused{border-color:var(--warn);background:var(--warn-soft)} .att .excused span{color:var(--warn)}
+.att .absent{border-color:var(--accent);background:var(--accent-soft)} .att .absent span{color:var(--accent)}
+.att .out{opacity:.55;border-style:dashed} .att .out span{color:var(--muted)}
+
+/* tables & lists */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;background:var(--surface-2)}
+td.r,th.r{text-align:right}
+tr:last-child td{border-bottom:0}
+tr.grp td{background:var(--lane-soft);color:var(--ink);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:6px 10px}
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);min-height:56px;background:none;border-left:0;border-right:0;border-top:0;text-align:left;width:100%}
+.li:last-child{border-bottom:0}
+.li .grow{flex:1;min-width:0}
+.li .grow b{display:block}
+.li .grow small{color:var(--muted)}
+
+/* stats */
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{border:0;background:none;border-radius:9px;padding:8px 14px;font-weight:700;font-size:14px;min-height:40px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.awards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+@media (max-width:480px){.awards{grid-template-columns:1fr 1fr}.award{flex-direction:column;align-items:flex-start;gap:8px;padding:12px}.kpis{grid-template-columns:1fr 1fr}.hero-num{font-size:26px}}
+.award{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;gap:12px;align-items:center}
+.award .e{font-size:30px;line-height:1;width:44px;height:44px;display:grid;place-items:center;background:var(--lane-soft);border-radius:12px;flex:none}
+.award .t{min-width:0}
+.award .t small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.award .t b{display:block;font-size:17px;font-family:var(--f-display)}
+.award .t span{font-size:13px;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:7px}
+.bar{display:grid;grid-template-columns:minmax(70px,120px) 1fr auto;gap:10px;align-items:center;font-size:14px}
+.bar .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.bar .tr{height:22px;background:var(--surface-2);border-radius:6px;overflow:hidden}
+.bar .fl{height:100%;background:var(--lane);border-radius:6px}
+.bar .fl.worst{background:var(--accent)}
+.bar .fl.best{background:var(--good)}
+.bar .v{font-variant-numeric:tabular-nums;font-weight:700;min-width:64px;text-align:right}
+.chart-scroll{overflow-x:auto}
+.chart-scroll svg text{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.chart-scroll svg .val{fill:var(--ink);font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* admin */
+.adm{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.adm:last-child{border-bottom:0}
+.adm input[type=text]{flex:1;min-width:120px;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:0 12px;height:44px;font-size:16px}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface-2)}
+.stepper button{border:0;background:none;width:44px;height:44px;font-size:20px;font-weight:700}
+.stepper span{min-width:70px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.toggle{border:1px solid var(--line);border-radius:999px;padding:0 14px;height:40px;background:var(--surface-2);font-weight:700;font-size:13.5px}
+.toggle[aria-pressed="true"]{background:var(--good-soft);color:var(--good);border-color:transparent}
+select{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;height:44px;padding:0 10px;font-size:16px}
+input[type=date]{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;height:44px;padding:0 10px;font-size:16px}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(8,10,18,.5);z-index:40;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+@keyframes fade{from{opacity:0}}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:88%;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;animation:up .2s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@media (min-width:700px){.scrim{align-items:center}.sheet{border-radius:20px}}
+.sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line);align-self:center}
+.penrow{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.penrow:last-child{border-bottom:0}
+.penrow .e{font-size:22px;width:30px;text-align:center}
+.penrow .grow{flex:1;min-width:0}
+.penrow .grow small{display:block;color:var(--muted);font-size:12.5px}
+.segctl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.segctl button{border:2px solid var(--line);border-radius:12px;background:var(--surface);min-height:48px;font-weight:700;font-size:14px}
+.segctl button[aria-pressed="true"].present{border-color:var(--good);background:var(--good-soft);color:var(--good)}
+.segctl button[aria-pressed="true"].excused{border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.segctl button[aria-pressed="true"].absent{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+/* toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 10px 10px 16px;display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.3);font-weight:600;animation:toastin .2s}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,10px)}}
+.toast button{border:0;background:var(--accent);color:var(--accent-ink);font-weight:800;border-radius:10px;padding:0 14px;min-height:40px;white-space:nowrap}
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:60;width:100%;height:100%}
+.empty{text-align:center;padding:36px 16px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.empty svg{width:64px;height:64px}
+.hero-num{font-family:var(--f-display);font-weight:800;font-size:34px;line-height:1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app" id="app">
+  <header class="top"><div class="in gut">
+    <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path fill="var(--lane)" d="M20 3c3 0 4.2 2.6 3.6 6-.4 2.2-1.9 3.6-1.9 5.4 0 2 3.9 5.3 3.9 11.6C25.6 33 23 37 20 37s-5.6-4-5.6-11c0-6.3 3.9-9.6 3.9-11.6 0-1.8-1.5-3.2-1.9-5.4C15.8 5.6 17 3 20 3z"/><path fill="var(--accent)" d="M16.7 15.3h6.6v1.9h-6.6zM16.4 18.4h7.2v1.6h-7.2z"/></svg>
+    <div class="brand"><b id="clubName">Kegelliste</b><small id="subline">Kegelclub</small></div>
+    <div class="sync" id="sync"></div>
+    <button class="icon-btn" id="soundBtn" data-act="sound" aria-label="Sound an/aus" title="Sound an/aus">🔇</button>
+  </div></header>
+  <main id="main"><div class="in gut" id="view"></div></main>
+  <div class="dock" id="dock" hidden><div class="in gut" id="dockIn"></div></div>
+  <nav class="tabs" aria-label="Bereiche"><div class="in gut" id="nav"></div></nav>
+</div>
+<div id="sheetHost"></div>
+<div id="toastHost"></div>
+<canvas id="fx"></canvas>
+
+<script>
+(function(){
+'use strict';
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const clone = o => JSON.parse(JSON.stringify(o));
+const pad = n => String(n).padStart(2,'0');
+const todayISO = () => { const d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+const fmtDate = iso => { if(!iso) return ''; const [y,m,d] = iso.split('-'); return d+'.'+m+'.'+y; };
+const fmtShort = iso => { const [y,m,d] = iso.split('-'); return d+'.'+m+'.'; };
+const weekday = iso => new Date(iso+'T12:00:00').toLocaleDateString('de-DE',{weekday:'long'});
+const eur = c => (c/100).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const daysSince = iso => Math.floor((Date.now() - new Date(iso+'T12:00:00').getTime())/86400000);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const slug = s => s.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'x';
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+
+/* ---------- defaults (from the paper list "Stand 06.2026") ---------- */
+const DEFAULT_PLAYERS = ['Anja','Basti','Chiara','Felix','Henrik','Ina','Jana','Jonas','Lauro','Lea','Luisa','Nico','Nils','Patrick','Paul','Robin J.','Robin S.','Tina','Yannick'];
+function defaultConfig(){
+  return {
+    club:'Die Umwerfenden',
+    players: DEFAULT_PLAYERS.map(n => ({id:slug(n), name:n, active:true})),
+    penalties:[
+      {id:'gosse',name:'Gosse',cents:20,mode:'self',emoji:'🕳️'},
+      {id:'neun',name:'Alle Neun',cents:30,mode:'others',emoji:'🎳'},
+      {id:'null',name:'0-Punkte-Wurf',cents:20,mode:'others',emoji:'🥚'},
+      {id:'liegen',name:'Kugel bleibt liegen',cents:20,mode:'self',emoji:'🐌'},
+      {id:'klingeln',name:'Klingeln',cents:100,mode:'self',emoji:'🔔'},
+      {id:'verlierer',name:'Verlierer (Team)',cents:50,mode:'self',emoji:'😩'},
+      {id:'spaet',name:'Zu spät (ab 5 Min.)',cents:100,mode:'self',emoji:'⏰'},
+      {id:'krug',name:'Krug bringen',cents:100,mode:'self',emoji:'🍺'},
+      {id:'kasse',name:'Kasse vergessen',cents:100,mode:'self',emoji:'💸'}
+    ],
+    rules:{startgeld:200, startgeldForAbsent:true, absentFee:500, overdueDays:28, overdueFee:200}
+  };
+}
+
+/* ---------- fun ---------- */
+const QUIPS = {
+  gosse:['Ab in die Rinne!','Die Rinne sagt danke.','Klassischer Pudel.','Die Kugel wollte nur spazieren.','Gosse! Die Kegel lachen leise.'],
+  neun:['ALLE NEUNE! Alle anderen zahlen.','Abgeräumt! Kasse klingelt bei den anderen.','Neun auf einen Streich!'],
+  null:['Null Punkte. Immerhin konsequent.','Die Kegel blieben unbeeindruckt.','Nix getroffen, alle anderen zahlen Trostgeld.'],
+  liegen:['Die Kugel macht erstmal Pause.','Kugel im Streik.','Zu sanft. Viel zu sanft.'],
+  klingeln:['Bing-bong! Ein Euro.','Die Glocke hat gesprochen.','Ding-dong, die Kasse kommt.'],
+  verlierer:['Verloren, aber mit Stil.','Nächstes Mal wird alles besser.','Teamgeist kostet 50 Cent.'],
+  spaet:['Die Kegel haben schon gewartet.','Pünktlichkeit ist eine Zier...','Zu spät! Ausrede notiert.'],
+  krug:['Prost! Der Krug ist unterwegs.','Durst ist teurer als Gosse.','Krug bringen, Stimmung heben.'],
+  kasse:['Kasse vergessen? Klassiker.','Wer hat die Kasse? Ach so.']
+};
+const quip = (pen,name) => (QUIPS[pen.id] ? pick(QUIPS[pen.id]) : pick(['Notiert!','Ab in die Kasse!','Das kostet.'])) ;
+
+/* ---------- state ---------- */
+const S = {
+  mode:'local', db:null, loading:true, loadNote:null, readOnly:false,
+  config:null, games:{},
+  tab: (lsGet('kl.tab')||'abend'), viewGameId:null, selPen:'gosse', statRange:'all', statMetric:'sum',
+  draft:null, sheet:null, undo:[], sound: lsGet('kl.sound') !== false, renderPending:false, armed:null
+};
+const dirty = new Set();
+const deleting = new Set();
+
+/* ---------- persistence ---------- */
+const LS_KEY = 'kl.data.v1';
+/* Native app (Capacitor on iPad/iPhone/Android): data lives in the app's own storage on the device. */
+const CAP = window.Capacitor;
+const NATIVE = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
+/* Installable web app (PWA): the build adds <meta name="kl-pwa">; data stays on the device, works offline. */
+const PWA = !NATIVE && !!document.querySelector('meta[name="kl-pwa"]');
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const plug = n => (NATIVE && CAP.Plugins && CAP.Plugins[n]) || null;
+let prefT = null;
+function savePrefsNow(){ const P = plug('Preferences'); if(!P) return; clearTimeout(prefT); P.set({key:LS_KEY, value:JSON.stringify({config:S.config, games:S.games})}).catch(() => {}); }
+function saveLocal(){
+  lsSet(LS_KEY, {config:S.config, games:S.games});
+  if(plug('Preferences')){ clearTimeout(prefT); prefT = setTimeout(savePrefsNow, 300); }
+}
+async function loadLocal(){
+  let d = null;
+  const P = plug('Preferences');
+  if(P){ try{ const r = await P.get({key:LS_KEY}); d = r && r.value ? JSON.parse(r.value) : null; }catch(e){} }
+  if(!d) d = lsGet(LS_KEY);
+  if(d && d.config){ S.config = d.config; S.games = d.games || {}; }
+  else { S.config = defaultConfig(); S.games = {}; saveLocal(); }
+}
+const writers = {};
+function persist(key){
+  if(S.mode !== 'db'){ saveLocal(); return; }
+  if(S.readOnly) return;
+  dirty.add(key);
+  const w = writers[key] || (writers[key] = {t:null, busy:false, again:false});
+  clearTimeout(w.t);
+  w.t = setTimeout(() => flush(key), 500);
+}
+function refFor(key){ return key === 'config' ? S.db.doc('club/config') : S.db.doc('games/' + key.slice(5)); }
+function dataFor(key){
+  if(key === 'config') return S.config;
+  const id = key.slice(5);
+  return S.games[id] ? S.games[id] : null;
+}
+async function flush(key){
+  const w = writers[key];
+  if(w.busy){ w.again = true; return; }
+  w.busy = true;
+  try{
+    const data = dataFor(key);
+    const ref = refFor(key);
+    if(data === null) await ref.delete(); else await ref.set(clone(data));
+  }catch(e){
+    if(e && e.code === 'invalid_argument'){ S.readOnly = true; toast('Nur Lesezugriff – Änderungen werden nicht gespeichert.'); }
+    else if(e && e.code === 'unavailable'){ w.again = true; await new Promise(r => setTimeout(r, 800 + Math.random()*800)); }
+    else toast('Speichern fehlgeschlagen (' + (e && e.code || 'Fehler') + ').');
+  }
+  w.busy = false;
+  if(w.again){ w.again = false; flush(key); return; }
+  dirty.delete(key);
+  if(key.startsWith('game:')) deleting.delete(key.slice(5));
+}
+
+function subscribe(){
+  let gotCfg = false, gotGames = false;
+  const timer = setTimeout(() => { if(S.loading || !gotCfg || !gotGames){ S.loadNote = 'Die gespeicherten Daten sind gerade nicht erreichbar. Prüfe die Internetverbindung.'; S.loading = false; render(); } }, 10000);
+  const done = () => { if(gotCfg && gotGames){ clearTimeout(timer); S.loading = false; S.loadNote = null; } };
+  S.db.doc('club/config').onSnapshot(snap => {
+    if(!dirty.has('config')) S.config = snap.exists ? clone(snap.data()) : null;
+    if(!snap.metadata.fromCache) gotCfg = true;
+    done(); render();
+  }, err => { clearTimeout(timer); S.loading = false; S.loadNote = 'Daten konnten nicht geladen werden (' + err.code + ').'; render(); });
+  S.db.collection('games').onSnapshot(snap => {
+    const next = {};
+    snap.docs.forEach(d => { const g = clone(d.data()); g.id = d.id; next[d.id] = g; });
+    Object.keys(S.games).forEach(id => { if(dirty.has('game:'+id)) next[id] = S.games[id]; });
+    deleting.forEach(id => delete next[id]);
+    S.games = next;
+    if(!snap.metadata.fromCache) gotGames = true;
+    done(); render();
+  }, err => { clearTimeout(timer); S.loading = false; S.loadNote = 'Abende konnten nicht geladen werden (' + err.code + ').'; render(); });
+}
+
+/* ---------- money logic ---------- */
+function calc(g){
+  const pens = g.penalties, R = g.rules;
+  const present = g.roster.filter(r => r.att === 'present');
+  const rows = {};
+  g.roster.forEach(r => rows[r.id] = {id:r.id, name:r.name, att:r.att, pen:0, start:0, absence:0, total:0, paid:0, fee:0, open:0, cnt:{}});
+  present.forEach(p => {
+    const cs = (g.counts && g.counts[p.id]) || {};
+    pens.forEach(pn => {
+      const n = cs[pn.id] || 0; if(!n) return;
+      rows[p.id].cnt[pn.id] = n;
+      if(pn.mode === 'others') present.forEach(q => { if(q.id !== p.id) rows[q.id].pen += n * pn.cents; });
+      else rows[p.id].pen += n * pn.cents;
+    });
+  });
+  const sumPen = present.reduce((s,p) => s + rows[p.id].pen, 0);
+  const avg = present.length ? Math.round(sumPen / present.length) : 0;
+  let total = 0, paid = 0, open = 0;
+  const overdue = g.status === 'closed' && daysSince(g.date) > R.overdueDays;
+  g.roster.forEach(r => {
+    const o = rows[r.id];
+    o.start = (r.att === 'present' || (R.startgeldForAbsent && r.att !== 'out')) ? R.startgeld : 0;
+    o.absence = r.att === 'excused' ? avg : r.att === 'absent' ? R.absentFee + avg : 0;
+    o.total = o.start + o.pen + o.absence;
+    o.paid = (g.paid && g.paid[r.id]) || 0;
+    const storedFee = g.fees && g.fees[r.id];
+    o.fee = storedFee != null ? storedFee : (overdue && o.paid < o.total ? R.overdueFee : 0);
+    o.open = Math.max(0, o.total + o.fee - o.paid);
+    o.overdue = o.fee > 0 && o.open > 0;
+    total += o.total + o.fee; paid += o.paid; open += o.open;
+  });
+  return {rows, avg, sumPen, present:present.length, total, paid, open};
+}
+const ATT_ORDER = {present:0, excused:1, absent:2};
+const rosterOrdered = g => g.roster.slice().sort((a,b) => (ATT_ORDER[a.att] - ATT_ORDER[b.att]) || a.name.localeCompare(b.name,'de'));
+function listMakerAuto(g, c){
+  const pres = g.roster.filter(r => r.att === 'present').sort((a,b) => (c.rows[b.id].pen - c.rows[a.id].pen) || a.name.localeCompare(b.name,'de'));
+  if(pres.length < 2 || c.rows[pres[0].id].pen === 0) return null;
+  return pres[1];
+}
+function listMaker(g, c){
+  if(g.listMaker){ const r = g.roster.find(x => x.id === g.listMaker && x.att === 'present'); if(r) return {r, auto:false}; }
+  const a = listMakerAuto(g, c || calc(g));
+  return a ? {r:a, auto:true} : null;
+}
+const gamesSorted = () => Object.values(S.games).sort((a,b) => (b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+const openGame = () => gamesSorted().find(g => g.status === 'open');
+function currentGame(){
+  if(S.viewGameId && S.games[S.viewGameId]) return S.games[S.viewGameId];
+  return openGame() || null;
+}
+
+/* ---------- mutations ---------- */
+function touch(g){ g.updatedAt = Date.now(); persist('game:' + g.id); }
+function addPen(g, pid, penId, delta, fromTap){
+  if(S.readOnly){ toast('Nur Lesezugriff.'); return; }
+  g.counts = g.counts || {};
+  const c = g.counts[pid] = g.counts[pid] || {};
+  const before = c[penId] || 0;
+  const after = Math.max(0, before + delta);
+  if(after === before) return;
+  c[penId] = after;
+  touch(g);
+  if(fromTap){
+    S.undo.push({gid:g.id, pid, penId});
+    if(S.undo.length > 30) S.undo.shift();
+  }
+}
+function startGame(){
+  const d = S.draft;
+  const roster = S.config.players.filter(p => p.active).map(p => ({id:p.id, name:p.name, att:d.att[p.id] || 'present'})).filter(r => r.att !== 'out');
+  if(!roster.some(r => r.att === 'present')){ toast('Mindestens eine Person muss anwesend sein.'); return; }
+  const g = {
+    id: d.date + '-' + Math.random().toString(36).slice(2,6), date:d.date, status:'open', createdAt:Date.now(), updatedAt:Date.now(),
+    roster, counts:{}, paid:{}, fees:{}, listMaker:null,
+    penalties: clone(S.config.penalties), rules: clone(S.config.rules)
+  };
+  S.games[g.id] = g; S.viewGameId = g.id; S.draft = null;
+  persist('game:' + g.id);
+  sfx('roll'); setTimeout(() => { sfx('crash'); confetti(60); banner('Gut Holz!', '🎳'); }, 700);
+  toast(pick(['Gut Holz! Der Abend läuft.','Auf geht’s – gut Holz!','Die Bahn ist frei. Gut Holz!']));
+  wake();
+}
+function syncOpenGames(){
+  Object.values(S.games).forEach(g => {
+    if(g.status !== 'open') return;
+    const used = new Set();
+    Object.values(g.counts || {}).forEach(c => Object.keys(c).forEach(k => { if(c[k]) used.add(k); }));
+    const next = clone(S.config.penalties);
+    g.penalties.forEach(p => { if(used.has(p.id) && !next.some(n => n.id === p.id)) next.push(p); });
+    g.penalties = next; g.rules = clone(S.config.rules);
+    touch(g);
+  });
+}
+
+/* ---------- sound / haptics / confetti ---------- */
+/* Synthesized sounds (no audio files needed, works offline). */
+let actx = null, master = null;
+function ac(){
+  if(!actx){ actx = new (window.AudioContext || window.webkitAudioContext)(); master = actx.createGain(); master.gain.value = 0.55; master.connect(actx.destination); }
+  if(actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(f0, t, dur, o = {}){
+  const a = actx, osc = a.createOscillator(), g = a.createGain();
+  osc.type = o.type || 'sine';
+  osc.frequency.setValueAtTime(f0, t);
+  if(o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + dur);
+  if(o.vib){ const l = a.createOscillator(), lg = a.createGain(); l.frequency.value = o.vib; lg.gain.value = o.vibDepth || 8; l.connect(lg); lg.connect(osc.frequency); l.start(t); l.stop(t + dur + .05); }
+  let node = osc;
+  if(o.lp){ const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; osc.connect(f); node = f; }
+  const v = o.vol || .3, atk = o.atk || .01;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + atk);
+  if(o.hold) g.gain.setValueAtTime(v, t + dur - .05);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  node.connect(g); g.connect(master); osc.start(t); osc.stop(t + dur + .05);
+}
+function noise(t, dur, o = {}){
+  const a = actx, len = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+  for(let i = 0; i < len; i++) d[i] = Math.random()*2 - 1;
+  const src = a.createBufferSource(); src.buffer = buf;
+  const f = a.createBiquadFilter(); f.type = o.type || 'bandpass'; f.frequency.value = o.freq || 1800; f.Q.value = o.q || 1;
+  const g = a.createGain(); g.gain.setValueAtTime(o.vol || .3, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur);
+}
+const SFX = {
+  clack(t){ tone(320 + Math.random()*60, t, .15, {type:'triangle', vol:.25}); noise(t, .06, {freq:2500, vol:.15}); },
+  sad(t){ // sad trombone: wah wah wah waaaah
+    [[392,.32],[370,.32],[349,.32]].forEach(([f,d],i) => tone(f, t + i*.36, d, {type:'sawtooth', lp:1100, vol:.22, atk:.04, to:f*.97}));
+    tone(330, t + 1.08, 1.1, {type:'sawtooth', lp:1000, vol:.24, atk:.04, vib:6, vibDepth:10, to:300, hold:true});
+  },
+  fanfare(t){ [523,659,784].forEach((f,i) => tone(f, t + i*.11, .14, {type:'square', lp:2800, vol:.16})); tone(1047, t + .33, .6, {type:'square', lp:2800, vol:.18, vib:7, vibDepth:6, hold:true}); tone(784, t + .33, .6, {type:'triangle', vol:.15}); },
+  crash(t){ noise(t, .55, {freq:1600, q:.6, vol:.45}); for(let i=0;i<6;i++) tone(260 + Math.random()*400, t + Math.random()*.25, .12, {type:'triangle', vol:.18}); },
+  roll(t){ noise(t, .9, {type:'lowpass', freq:300, vol:.35}); },
+  bell(t){ [1,2.76,5.4].forEach((m,i) => tone(880*m, t, 1.4 - i*.35, {vol:.22/(i+1)})); tone(880, t + .45, 1, {vol:.12}); [1,2.76].forEach((m,i) => tone(740*m, t + .45, 1.1 - i*.3, {vol:.16/(i+1)})); },
+  boing(t){ tone(620, t, .45, {to:140, vib:22, vibDepth:40, vol:.3}); },
+  womp(t){ tone(233, t, .35, {type:'sawtooth', lp:700, to:200, vol:.22}); tone(207, t + .4, .7, {type:'sawtooth', lp:650, to:150, vol:.24, vib:5, vibDepth:6}); },
+  snail(t){ tone(420, t, 1.3, {to:180, vol:.18, type:'triangle', vib:3, vibDepth:12}); },
+  ticktock(t){ for(let i=0;i<4;i++) noise(t + i*.22, .05, {type:'highpass', freq: i % 2 ? 2500 : 4200, vol:.4}); tone(1568, t + .95, .35, {type:'square', lp:3000, vol:.12}); tone(1568, t + 1.1, .35, {type:'square', lp:3000, vol:.12}); },
+  glug(t){ for(let i=0;i<5;i++) tone(180 + i*45 + Math.random()*30, t + i*.11, .1, {to:420 + i*60, vol:.25}); },
+  kaching(t){ tone(1318, t, .08, {type:'square', lp:4000, vol:.12}); tone(1760, t + .08, .5, {type:'square', lp:4000, vol:.12}); noise(t + .08, .45, {type:'highpass', freq:6000, vol:.18}); }
+};
+const PEN_FX = {gosse:'sad', neun:'fanfare', null:'boing', liegen:'snail', klingeln:'bell', verlierer:'womp', spaet:'ticktock', krug:'glug', kasse:'kaching'};
+function sfx(name){
+  if(!S.sound) return;
+  try{ ac(); (SFX[name] || SFX.clack)(actx.currentTime + .01); }catch(e){}
+}
+function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+function clack(kind){ buzz(kind === 'big' ? [20,40,20] : 12); sfx(kind === 'big' ? 'fanfare' : 'clack'); }
+const fx = $('#fx'); let parts = [], raf = null;
+function confetti(n){
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const W = fx.width = innerWidth * devicePixelRatio, H = fx.height = innerHeight * devicePixelRatio;
+  const cs = getComputedStyle(document.documentElement);
+  const cols = ['--accent','--lane','--good','--warn'].map(v => cs.getPropertyValue(v).trim());
+  for(let i=0;i<n;i++) parts.push({x:W/2 + (Math.random()-.5)*W*.3, y:H*.55, vx:(Math.random()-.5)*14*devicePixelRatio, vy:(-Math.random()*16-8)*devicePixelRatio, r:Math.random()*6+4, c:pick(cols), a:Math.random()*6, life:110});
+  if(!raf) tick();
+  function tick(){
+    const ctx = fx.getContext('2d'); ctx.clearRect(0,0,W,H);
+    parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .45*devicePixelRatio; p.a += .2; p.life--; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r,-p.r/2,p.r*2*devicePixelRatio/1.5,p.r*devicePixelRatio/1.5); ctx.restore(); });
+    parts = parts.filter(p => p.life > 0 && p.y < H + 40);
+    raf = parts.length ? requestAnimationFrame(tick) : (ctx.clearRect(0,0,W,H), null);
+  }
+}
+let wakeLock = null;
+async function wake(){ try{ if('wakeLock' in navigator && !wakeLock){ wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } }catch(e){} }
+
+/* ---------- toast ---------- */
+let toastT = null;
+function toast(msg, undo){
+  const host = $('#toastHost');
+  host.innerHTML = '<div class="toast" role="status"><span>' + esc(msg) + '</span>' + (undo ? '<button data-act="undo">Rückgängig</button>' : '') + '</div>';
+  clearTimeout(toastT); toastT = setTimeout(() => host.innerHTML = '', undo ? 4200 : 2800);
+}
+
+/* ---------- icons ---------- */
+const IC = {
+  abend:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><circle cx="9.5" cy="11" r="1"/><circle cx="13" cy="10" r="1"/><circle cx="12" cy="13.6" r="1"/></svg>',
+  kasse:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16 14.5h2"/></svg>',
+  stats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V11M10 20V5M15 20v-7M20 20V8"/></svg>',
+  admin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>'
+};
+
+/* ---------- render ---------- */
+function isTyping(){ const a = document.activeElement; return a && (a.tagName === 'INPUT' && a.type === 'text'); }
+function render(){
+  if(isTyping()){ S.renderPending = true; return; }
+  S.renderPending = false;
+  const cfg = S.config;
+  $('#clubName').textContent = cfg ? 'Kegelclub ' + cfg.club : 'Kegelliste';
+  $('#subline').textContent = cfg ? weekday(todayISO()) + ', ' + fmtDate(todayISO()) : 'wird geladen…';
+  $('#sync').innerHTML = S.mode === 'db' ? '<i' + (S.loadNote ? ' class="off"' : '') + '></i>' + (S.readOnly ? 'nur lesen' : 'geteilt') : S.mode === 'native' ? '<i></i>auf diesem Gerät' : '<i class="off"></i>nur dieses Gerät';
+  $('#soundBtn').textContent = S.sound ? '🔊' : '🔇';
+  const tabs = [['abend','Abend'],['kasse','Kasse'],['stats','Statistik'],['admin','Verwaltung']];
+  $('#nav').innerHTML = tabs.map(([k,l]) => '<button data-act="tab" data-tab="' + k + '"' + (S.tab === k ? ' aria-current="page"' : '') + '>' + IC[k] + l + '</button>').join('');
+  let html = '';
+  if(S.loadNote) html += '<div class="banner">' + esc(S.loadNote) + '</div>';
+  if(S.updateReady) html += '<div class="banner"><span>Eine neue Version der Kegelliste ist da.</span><button class="btn primary" data-act="applyUpdate">Jetzt aktualisieren</button></div>';
+  if(PWA && !STANDALONE && !S.hintDismissed && S.tab === 'abend'){
+    if(IOS) html += '<div class="banner"><span>Als App installieren: unten in Safari auf <b>Teilen</b> (Quadrat mit Pfeil) tippen, dann <b>„Zum Home-Bildschirm“</b>.</span><button class="btn" data-act="dismissHint">OK</button></div>';
+    else if(S.installEvt) html += '<div class="banner"><span>Die Kegelliste lässt sich als App installieren.</span><span class="row"><button class="btn" data-act="dismissHint">Später</button><button class="btn primary" data-act="install">Installieren</button></span></div>';
+  }
+  if(!cfg){
+    html += S.loading ? '<div class="empty"><p class="muted">Kegelliste wird geladen…</p></div>' : viewNoConfig();
+    $('#view').innerHTML = html; $('#dock').hidden = true; renderSheet(); return;
+  }
+  if(S.tab === 'abend') html += viewAbend();
+  else if(S.tab === 'kasse') html += viewKasse();
+  else if(S.tab === 'stats') html += viewStats();
+  else html += viewAdmin();
+  $('#view').innerHTML = html;
+  renderDock();
+  renderSheet();
+}
+function viewNoConfig(){
+  return '<div class="empty card">' + pinSvg() + '<h2>Noch keine Kegelliste angelegt</h2><p class="muted">Lade die Vorlage mit den 19 Mitgliedern und den Strafen aus eurer Papierliste. Alles lässt sich danach unter „Verwaltung“ ändern.</p><button class="btn primary big" data-act="loadTemplate">Vorlage „Die Umwerfenden“ laden</button></div>';
+}
+function pinSvg(){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><path fill="var(--lane)" d="M20 3c3 0 4.2 2.6 3.6 6-.4 2.2-1.9 3.6-1.9 5.4 0 2 3.9 5.3 3.9 11.6C25.6 33 23 37 20 37s-5.6-4-5.6-11c0-6.3 3.9-9.6 3.9-11.6 0-1.8-1.5-3.2-1.9-5.4C15.8 5.6 17 3 20 3z"/><path fill="var(--accent)" d="M16.7 15.3h6.6v1.9h-6.6zM16.4 18.4h7.2v1.6h-7.2z"/></svg>'; }
+
+/* ----- Abend ----- */
+function viewAbend(){
+  const g = currentGame();
+  if(!g) return viewStart();
+  if(g.status === 'closed') return viewSummary(g);
+  return viewGame(g);
+}
+function viewStart(){
+  const cfg = S.config;
+  if(!S.draft) S.draft = {date: todayISO(), att:{}};
+  const d = S.draft;
+  const label = {present:'Anwesend', excused:'Entschuldigt', absent:'Unentschuldigt', out:'Nicht auf der Liste'};
+  const act = cfg.players.filter(p => p.active);
+  const n = act.filter(p => (d.att[p.id] || 'present') === 'present').length;
+  const last = gamesSorted().find(g => g.status === 'closed');
+  let h = '<section class="card" style="display:flex;flex-direction:column;gap:14px">' +
+    '<div class="spread"><div><div class="eyebrow">Neuer Kegelabend</div><h2>Wer ist heute da?</h2></div>' +
+    '<label class="row"><span class="muted">Datum</span><input type="date" id="draftDate" value="' + d.date + '" data-chg="draftDate"></label></div>' +
+    '<p class="muted" style="margin:0">Tippe auf einen Namen, um zwischen <b>anwesend</b>, <b>entschuldigt</b>, <b>unentschuldigt</b> und <b>nicht auf der Liste</b> zu wechseln.</p>' +
+    '<div class="att">' + act.map(p => { const a = d.att[p.id] || 'present'; return '<button class="' + a + '" data-act="draftAtt" data-pid="' + p.id + '"><b>' + esc(p.name) + '</b><span>' + label[a] + '</span></button>'; }).join('') + '</div>' +
+    '<div class="spread"><button class="btn ghost" data-act="draftAll">Alle anwesend</button><button class="btn primary big" data-act="startGame">Gut Holz! Abend starten (' + n + ')</button></div></section>';
+  if(last){
+    const c = calc(last);
+    h += '<section class="card spread"><div><div class="eyebrow">Letzter Abend</div><b style="font-size:17px">' + fmtDate(last.date) + '</b> <span class="muted">· ' + c.present + ' Anwesende · ' + eur(c.total) + '</span></div><button class="btn" data-act="openGame" data-gid="' + last.id + '">Ansehen</button></section>';
+  }
+  return h;
+}
+function leaders(g, c){
+  const present = g.roster.filter(r => r.att === 'present');
+  const maxPen = Math.max(0, ...present.map(p => c.rows[p.id].pen));
+  return {top: maxPen > 0 ? present.filter(p => c.rows[p.id].pen === maxPen).map(p => p.id) : []};
+}
+function viewGame(g){
+  const c = calc(g);
+  const pen = g.penalties.find(p => p.id === S.selPen) || g.penalties[0];
+  if(pen) S.selPen = pen.id;
+  const present = g.roster.filter(r => r.att === 'present');
+  const others = g.roster.filter(r => r.att !== 'present');
+  const L = leaders(g, c);
+  let h = '<div class="gamebar"><div class="d"><span class="eyebrow">Läuft · ' + weekday(g.date) + '</span><b>' + fmtDate(g.date) + '</b></div>' +
+    '<div class="row"><div style="text-align:right"><div class="eyebrow">Kasse heute</div><div class="lane-total num">' + eur(c.total) + '</div></div></div></div>';
+  if(S.viewGameId && openGame() && openGame().id !== g.id) h += '<div class="banner">Du bearbeitest einen älteren Abend. <button class="btn" data-act="backToCurrent">Zum aktuellen</button></div>';
+  h += '<div class="grid">' + present.map(p => {
+    const r = c.rows[p.id], n = r.cnt[S.selPen] || 0;
+    return '<div class="tile" role="button" tabindex="0" data-act="tap" data-pid="' + p.id + '" aria-label="' + esc(p.name) + ': ' + esc(pen ? pen.name : '') + ' eintragen">' +
+      (L.top.includes(p.id) ? '<span class="crown" title="Strafenkönig des Abends">👑</span>' : '') +
+      '<span class="n">' + esc(p.name) + '</span>' +
+      '<button class="more" data-act="player" data-pid="' + p.id + '" aria-label="Details zu ' + esc(p.name) + '">⋯</button>' +
+      '<span class="b">' + (n ? '<span class="cnt">' + n + '× ' + esc(pen.emoji || '') + '</span>' : '') + '</span>' +
+      '<span class="s num">' + eur(r.pen) + '</span></div>';
+  }).join('') + '</div>';
+  if(others.length) h += '<div class="absent"><span class="eyebrow">Nicht da:</span>' + others.map(o => '<button data-act="player" data-pid="' + o.id + '">' + esc(o.name) + ' · ' + (o.att === 'excused' ? 'entschuldigt (Ø)' : '5 € + Ø') + '</button>').join('') + '</div>';
+  const lmNow = listMaker(g, c);
+  h += '<div class="spread"><span class="muted" style="font-size:13.5px">Tipp: Strafe unten wählen, dann auf Namen tippen. Lange drücken oder ⋯ für Korrekturen. Ø heute: <b class="num">' + eur(c.avg) + '</b>' + (lmNow ? ' · Liste macht gerade: <b>📝 ' + esc(lmNow.r.name) + '</b>' : '') + '</span>' +
+    '<div class="row"><button class="btn" data-act="roster">Teilnehmer</button><button class="btn primary" data-act="endGame">Abend beenden</button></div></div>';
+  return h;
+}
+function renderDock(){
+  const g = currentGame();
+  const show = S.tab === 'abend' && g && g.status === 'open' && !S.readOnly;
+  $('#dock').hidden = !show;
+  if(!show) return;
+  const pen = g.penalties.find(p => p.id === S.selPen);
+  $('#dockIn').innerHTML = '<div class="dock-label"><span>Strafe wählen</span><span>' + (pen && pen.mode === 'others' ? 'zahlen alle außer Werfer' : '') + '</span></div><div class="chips" role="group" aria-label="Strafe">' +
+    g.penalties.map(p => '<button class="pen" data-act="selPen" data-pen="' + p.id + '" aria-pressed="' + (p.id === S.selPen) + '"><span class="e">' + esc(p.emoji || '•') + '</span><span class="t"><b>' + esc(p.name) + '</b><span class="num">' + eur(p.cents) + (p.mode === 'others' ? ' · alle anderen' : '') + '</span></span></button>').join('') + '</div>';
+}
+function gameAwards(g, c){
+  const present = g.roster.filter(r => r.att === 'present');
+  const by = id => present.map(p => ({p, n: c.rows[p.id].cnt[id] || 0})).filter(x => x.n > 0).sort((a,b) => b.n - a.n);
+  const out = [];
+  const best = (id, e, title, unit) => { const l = by(id); if(l.length) out.push({e, title, name:l.filter(x => x.n === l[0].n).map(x => x.p.name).join(', '), sub: l[0].n + '× ' + unit}); };
+  best('gosse','🕳️','Pudelkönig','Gosse');
+  best('neun','🎳','Neunerkönig','alle Neune');
+  best('klingeln','🔔','Glöckner','geklingelt');
+  const sorted = present.slice().sort((a,b) => c.rows[b.id].pen - c.rows[a.id].pen);
+  if(sorted.length && c.rows[sorted[0].id].pen > 0){
+    out.push({e:'👑', title:'Strafenkönig', name: sorted[0].name, sub: eur(c.rows[sorted[0].id].pen) + ' Strafen'});
+    const low = sorted[sorted.length-1];
+    out.push({e:'🦊', title:'Sparfuchs', name: low.name, sub: 'nur ' + eur(c.rows[low.id].pen)});
+  }
+  return out;
+}
+function viewSummary(g){
+  const c = calc(g);
+  const aw = gameAwards(g, c);
+  const rows = rosterOrdered(g);
+  const attTxt = {present:'anwesend', excused:'entschuldigt', absent:'unentschuldigt'};
+  const lm = listMaker(g, c);
+  let h = '<div class="gamebar"><div class="d"><span class="eyebrow">Abgeschlossen · ' + weekday(g.date) + (g.example ? ' · Beispiel' : '') + '</span><b>' + fmtDate(g.date) + '</b></div>' +
+    '<div class="row"><button class="btn" data-act="exportXlsx" data-gid="' + g.id + '">Excel</button><button class="btn" data-act="exportPdf" data-gid="' + g.id + '">PDF</button></div></div>';
+  h += '<div class="kpis"><div class="card"><div class="eyebrow">Kasse gesamt</div><div class="hero-num num">' + eur(c.total) + '</div></div>' +
+    '<div class="card"><div class="eyebrow">Noch offen</div><div class="hero-num num" style="color:' + (c.open ? 'var(--accent)' : 'var(--good)') + '">' + eur(c.open) + '</div></div>' +
+    '<div class="card"><div class="eyebrow">Ø Strafen (ohne Startgeld)</div><div class="hero-num num">' + eur(c.avg) + '</div></div></div>';
+  if(aw.length) h += '<div class="awards">' + aw.map(a => '<div class="award"><span class="e">' + a.e + '</span><span class="t"><small>' + a.title + '</small><b>' + esc(a.name) + '</b><span>' + esc(a.sub) + '</span></span></div>').join('') + '</div>';
+  const groupHead = {present:'Anwesend', excused:'Entschuldigt (zahlen Ø)', absent:'Unentschuldigt (zahlen ' + eur(g.rules.absentFee) + ' + Ø)'};
+  let lastAtt = null;
+  h += '<div class="tbl-wrap"><table><thead><tr><th>Name</th><th class="r">Startgeld</th><th class="r">Strafen</th><th class="r">Gesamt</th><th class="r">Offen</th><th>Bezahlt</th></tr></thead><tbody>' +
+    rows.map(r => { const o = c.rows[r.id];
+      let sep = '';
+      if(r.att !== lastAtt){ lastAtt = r.att; sep = '<tr class="grp"><td colspan="6">' + groupHead[r.att] + '</td></tr>'; }
+      return sep + '<tr><td><button class="btn ghost" style="min-height:36px;padding:0 6px;border:0" data-act="player" data-pid="' + r.id + '">' + esc(r.name) + '</button></td><td class="r num">' + eur(o.start) + '</td><td class="r num">' + eur(o.pen + o.absence) + (r.att !== 'present' ? ' <small class="muted">(' + (r.att === 'excused' ? 'Ø' : '5 € + Ø') + ')</small>' : '') + '</td><td class="r num"><b>' + eur(o.total + o.fee) + '</b>' + (o.fee ? ' <span class="pill warn">+Mahnung</span>' : '') + '</td><td class="r num">' + (o.open ? '<span class="pill bad">' + eur(o.open) + '</span>' : '<span class="pill good">0,00 €</span>') + '</td><td><button class="toggle" data-act="togglePaid" data-gid="' + g.id + '" data-pid="' + r.id + '" aria-pressed="' + (o.open === 0) + '">' + (o.open === 0 ? '✓ bezahlt' : 'offen') + '</button></td></tr>'; }).join('') +
+    '</tbody></table></div>';
+  const cands = g.roster.filter(r => r.att === 'present');
+  h += '<div class="card spread"><div><div class="eyebrow">Vorletzte macht die Liste</div>' +
+    (lm ? '<b style="font-size:20px;font-family:var(--f-display)">📝 ' + esc(lm.r.name) + '</b> <span class="muted" style="font-size:13.5px">' + (lm.auto ? 'schreibt nächstes Mal (Platz 2 bei den Strafen)' : 'schreibt nächstes Mal (von Hand gewählt)') + '</span>' : '<span class="muted">Noch nicht genug Strafen für eine Auswahl.</span>') +
+    '</div><select id="listMaker" data-chg="listMaker" data-gid="' + g.id + '" aria-label="Listenführer ändern"><option value="">automatisch</option>' + cands.map(p => '<option value="' + p.id + '"' + (g.listMaker === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</select></div>';
+  h += '<div class="spread"><div class="row"><button class="btn" data-act="reopen" data-gid="' + g.id + '">Wieder öffnen</button>' + delBtn('delGame', g.id, 'Abend löschen') + '</div>' +
+    '<div class="row">' + (S.viewGameId ? '<button class="btn" data-act="backToCurrent">Zurück</button>' : '') + (openGame() ? '' : '<button class="btn primary" data-act="newGame">Neuer Abend</button>') + '</div></div>';
+  return h;
+}
+function delBtn(act, id, label){
+  const armed = S.armed === act + ':' + id;
+  return '<button class="btn danger" data-act="' + (armed ? act : 'arm') + '" data-key="' + act + ':' + id + '" data-id="' + id + '">' + (armed ? 'Wirklich? Tippen zum Löschen' : label) + '</button>';
+}
+
+/* ----- Kasse ----- */
+function viewKasse(){
+  const games = gamesSorted();
+  if(!games.length) return '<div class="empty card">' + pinSvg() + '<h2>Die Kasse ist noch leer</h2><p class="muted">Sobald der erste Abend läuft, siehst du hier, wer noch etwas schuldet.</p><button class="btn primary" data-act="tab" data-tab="abend">Ersten Abend starten</button></div>';
+  const per = {};
+  let openAll = 0, paidAll = 0;
+  games.forEach(g => { const c = calc(g); paidAll += c.paid; g.roster.forEach(r => { const o = c.rows[r.id]; if(!per[r.id]) per[r.id] = {id:r.id, name:r.name, open:0, overdue:false, n:0}; per[r.id].open += o.open; if(o.overdue) per[r.id].overdue = true; if(o.open) per[r.id].n++; }); openAll += c.open; });
+  const debtors = Object.values(per).filter(p => p.open > 0).sort((a,b) => b.open - a.open);
+  let h = '<div class="kpis"><div class="card"><div class="eyebrow">Noch offen</div><div class="hero-num num" style="color:' + (openAll ? 'var(--accent)' : 'var(--good)') + '">' + eur(openAll) + '</div></div>' +
+    '<div class="card"><div class="eyebrow">Eingezahlt gesamt</div><div class="hero-num num">' + eur(paidAll) + '</div></div>' +
+    '<div class="card"><div class="eyebrow">Abende</div><div class="hero-num num">' + games.length + '</div></div></div>';
+  if(games.some(g => g.example)) h += exampleBanner();
+  h += '<section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Wer schuldet noch?</h2><span class="muted" style="font-size:13px">Frist ' + S.config.rules.overdueDays + ' Tage, sonst ' + eur(S.config.rules.overdueFee) + '</span></div>';
+  h += debtors.length ? '<div class="list">' + debtors.map(d => '<button class="li" data-act="debtor" data-pid="' + d.id + '"><span class="grow"><b>' + esc(d.name) + '</b><small>' + d.n + ' Abend' + (d.n > 1 ? 'e' : '') + ' offen</small></span>' + (d.overdue ? '<span class="pill warn">überfällig</span>' : '') + '<span class="pill bad num">' + eur(d.open) + '</span></button>').join('') + '</div>'
+    : '<div class="card"><b>Alles bezahlt.</b> <span class="muted">Die Kasse ist sauber.</span></div>';
+  h += '</section><section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Alle Abende</h2><button class="btn" data-act="exportXlsxAll">Alles als Excel</button></div><div class="list">' +
+    games.map(g => { const c = calc(g); return '<button class="li" data-act="openGame" data-gid="' + g.id + '"><span class="grow"><b>' + fmtDate(g.date) + (g.status === 'open' ? ' <span class="pill good">läuft</span>' : '') + (g.example ? ' <span class="pill">Beispiel</span>' : '') + '</b><small>' + c.present + ' anwesend · Ø ' + eur(c.avg) + '</small></span><span class="num" style="text-align:right"><b>' + eur(c.total) + '</b><br><small class="muted">' + (c.open ? 'offen ' + eur(c.open) : 'alles bezahlt') + '</small></span></button>'; }).join('') + '</div></section>';
+  return h;
+}
+function exampleBanner(){ return '<div class="banner"><span>Enthält Beispielabende zum Ausprobieren.</span>' + delBtn('delExamples','all','Beispiele löschen') + '</div>'; }
+
+/* ----- Stats ----- */
+function statGames(){
+  const all = gamesSorted();
+  if(S.statRange === 'last') return all.slice(0,1);
+  if(S.statRange === 'year'){ const y = todayISO().slice(0,4); return all.filter(g => g.date.startsWith(y)); }
+  return all;
+}
+function viewStats(){
+  const games = statGames();
+  let h = '<div class="spread"><h2>Statistik</h2><div class="seg" role="group">' +
+    [['last','Letzter Abend'],['year','Dieses Jahr'],['all','Gesamt']].map(([k,l]) => '<button data-act="range" data-r="' + k + '" aria-pressed="' + (S.statRange === k) + '">' + l + '</button>').join('') + '</div></div>';
+  if(Object.values(S.games).some(g => g.example)) h += exampleBanner();
+  if(!games.length) return h + '<div class="empty card">' + pinSvg() + '<h3>Noch keine Abende in diesem Zeitraum</h3><p class="muted">Nach dem ersten Kegelabend erscheinen hier Ranglisten und Diagramme.</p></div>';
+  const P = {}; const penMeta = {};
+  games.forEach(g => {
+    const c = calc(g);
+    g.penalties.forEach(p => penMeta[p.id] = penMeta[p.id] || p);
+    g.roster.forEach(r => {
+      const x = P[r.id] = P[r.id] || {id:r.id, name:r.name, ev:0, pen:0, total:0, cnt:{}, late:0, miss:0};
+      const o = c.rows[r.id];
+      x.total += o.total;
+      if(r.att === 'present'){ x.ev++; x.pen += o.pen; Object.entries(o.cnt).forEach(([k,v]) => x.cnt[k] = (x.cnt[k] || 0) + v); }
+      else x.miss++;
+    });
+  });
+  const list = Object.values(P).filter(p => p.ev > 0);
+  list.forEach(p => p.avg = Math.round(p.pen / p.ev));
+  const metric = S.statMetric;
+  const val = p => metric === 'avg' ? p.avg : p.pen;
+  const sorted = list.slice().sort((a,b) => val(b) - val(a));
+  const max = Math.max(1, ...sorted.map(val));
+  const top = (id) => { const l = list.filter(p => p.cnt[id]).sort((a,b) => b.cnt[id] - a.cnt[id]); return l.length ? l[0] : null; };
+  const aw = [];
+  const add = (e, t, p, s) => p && aw.push('<div class="award"><span class="e">' + e + '</span><span class="t"><small>' + t + '</small><b>' + esc(p.name) + '</b><span>' + s + '</span></span></div>');
+  const g1 = top('gosse'); add('🕳️','Pudelkönig', g1, g1 && g1.cnt.gosse + '× in der Rinne');
+  const n9 = top('neun'); add('🎳','Neunerkönig', n9, n9 && n9.cnt.neun + '× alle Neune');
+  const kl = top('klingeln'); add('🔔','Glöckner', kl, kl && kl.cnt.klingeln + '× geklingelt');
+  const sp = top('spaet'); add('⏰','Zuspätkommer', sp, sp && sp.cnt.spaet + '× zu spät');
+  if(list.length){
+    const byAvg = list.slice().sort((a,b) => a.avg - b.avg);
+    add('🦊','Sparfuchs', byAvg[0], 'Ø ' + eur(byAvg[0].avg) + ' pro Abend');
+    add('👑','Strafenkönig', byAvg[byAvg.length-1], 'Ø ' + eur(byAvg[byAvg.length-1].avg) + ' pro Abend');
+    const loyal = list.slice().sort((a,b) => b.ev - a.ev)[0];
+    add('💚','Treueste Seele', loyal, loyal.ev + ' von ' + games.length + ' Abenden da');
+  }
+  h += '<div class="awards">' + aw.join('') + '</div>';
+  // bars per player
+  h += '<section class="card" style="display:flex;flex-direction:column;gap:12px"><div class="spread"><h3>Strafen pro Spieler</h3><div class="seg"><button data-act="metric" data-m="sum" aria-pressed="' + (metric === 'sum') + '">Summe</button><button data-act="metric" data-m="avg" aria-pressed="' + (metric === 'avg') + '">Ø pro Abend</button></div></div>' +
+    '<div class="legend"><span><i style="background:var(--accent)"></i>meiste Strafen</span><span><i style="background:var(--good)"></i>wenigste Strafen</span><span>ohne Startgeld</span></div><div class="bars">' +
+    sorted.map((p,i) => '<div class="bar"><span class="nm">' + esc(p.name) + '</span><span class="tr"><span class="fl' + (i === 0 ? ' worst' : i === sorted.length-1 && sorted.length > 1 ? ' best' : '') + '" style="width:' + Math.max(1.5, val(p)/max*100) + '%;display:block"></span></span><span class="v">' + eur(val(p)) + '</span></div>').join('') + '</div></section>';
+  // columns per evening
+  const evs = games.slice().reverse().map(g => ({g, c:calc(g)}));
+  if(evs.length > 1) h += '<section class="card" style="display:flex;flex-direction:column;gap:10px"><h3>Kasse pro Abend</h3>' + columnChart(evs) + '</section>';
+  // penalties frequency
+  const freq = {};
+  list.forEach(p => Object.entries(p.cnt).forEach(([k,v]) => freq[k] = (freq[k] || 0) + v));
+  const fl = Object.entries(freq).filter(([k]) => penMeta[k]).sort((a,b) => b[1] - a[1]);
+  const fmax = Math.max(1, ...fl.map(x => x[1]));
+  if(fl.length) h += '<section class="card" style="display:flex;flex-direction:column;gap:12px"><h3>Was am häufigsten passiert</h3><div class="bars">' +
+    fl.map(([k,v]) => '<div class="bar"><span class="nm">' + esc((penMeta[k].emoji || '') + ' ' + penMeta[k].name) + '</span><span class="tr"><span class="fl" style="width:' + (v/fmax*100) + '%;display:block"></span></span><span class="v">' + v + '×</span></div>').join('') + '</div></section>';
+  // table
+  const pens = Object.values(penMeta);
+  h += '<section style="display:flex;flex-direction:column;gap:10px"><h3>Alle Zahlen</h3><div class="tbl-wrap"><table><thead><tr><th>Name</th><th class="r">Abende</th><th class="r">Gefehlt</th>' + pens.map(p => '<th class="r" title="' + esc(p.name) + '">' + esc(p.emoji || p.name) + '</th>').join('') + '<th class="r">Strafen</th><th class="r">Ø</th></tr></thead><tbody>' +
+    Object.values(P).sort((a,b) => a.name.localeCompare(b.name,'de')).map(p => '<tr><td>' + esc(p.name) + '</td><td class="r num">' + p.ev + '</td><td class="r num">' + p.miss + '</td>' + pens.map(pn => '<td class="r num">' + (p.cnt[pn.id] || '') + '</td>').join('') + '<td class="r num">' + eur(p.pen) + '</td><td class="r num">' + (p.ev ? eur(Math.round(p.pen/p.ev)) : '–') + '</td></tr>').join('') +
+    '</tbody></table></div></section>';
+  return h;
+}
+function columnChart(evs){
+  const W = Math.max(340, evs.length * 56 + 50), H = 220, top = 22, bottom = 34, left = 44;
+  const max = Math.max(...evs.map(e => e.c.total));
+  const step = niceStep(max / 4);
+  const ymax = Math.ceil(max / step) * step || 100;
+  const y = v => top + (H - top - bottom) * (1 - v / ymax);
+  const bw = Math.min(34, (W - left - 10) / evs.length - 14);
+  let s = '<div class="chart-scroll"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Kasse pro Abend">';
+  for(let v = 0; v <= ymax + 1; v += step){ s += '<line x1="' + left + '" x2="' + (W-6) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)" stroke-width="1"/><text x="' + (left-6) + '" y="' + (y(v)+4) + '" text-anchor="end">' + Math.round(v/100) + ' €</text>'; }
+  const maxIdx = evs.findIndex(e => e.c.total === max);
+  evs.forEach((e,i) => {
+    const cx = left + 10 + i * ((W - left - 10) / evs.length) + ((W - left - 10) / evs.length - bw) / 2;
+    const yy = y(e.c.total);
+    s += '<rect x="' + cx + '" y="' + yy + '" width="' + bw + '" height="' + (H - bottom - yy) + '" rx="5" fill="' + (i === maxIdx ? 'var(--accent)' : 'var(--lane)') + '"/>';
+    s += '<text class="val" x="' + (cx + bw/2) + '" y="' + (yy - 6) + '" text-anchor="middle">' + Math.round(e.c.total/100) + '</text>';
+    s += '<text x="' + (cx + bw/2) + '" y="' + (H - bottom + 16) + '" text-anchor="middle">' + fmtShort(e.g.date) + '</text>';
+  });
+  return s + '</svg></div><div class="legend"><span><i style="background:var(--accent)"></i>teuerster Abend</span><span>Werte in Euro inkl. Startgeld</span></div>';
+}
+function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(Math.max(raw,1)))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+
+/* ----- Admin ----- */
+function stepper(act, id, cents, step){ return '<span class="stepper"><button data-act="' + act + '" data-id="' + id + '" data-d="' + (-step) + '" aria-label="weniger">−</button><span>' + eur(cents) + '</span><button data-act="' + act + '" data-id="' + id + '" data-d="' + step + '" aria-label="mehr">+</button></span>'; }
+function viewAdmin(){
+  const cfg = S.config, R = cfg.rules;
+  let h = '<section style="display:flex;flex-direction:column;gap:10px"><h2>Mitspieler</h2><div class="list">' +
+    cfg.players.map(p => '<div class="adm"><input type="text" id="pn-' + p.id + '" value="' + esc(p.name) + '" data-chg="pname" data-id="' + p.id + '" aria-label="Name"><button class="toggle" data-act="pactive" data-id="' + p.id + '" aria-pressed="' + p.active + '">' + (p.active ? 'aktiv' : 'pausiert') + '</button>' + delBtn('pdel', p.id, 'Entfernen') + '</div>').join('') +
+    '<div class="adm"><input type="text" id="newPlayer" placeholder="Neuer Name, z. B. Maria" aria-label="Neuer Mitspieler"><button class="btn primary" data-act="addPlayer">Hinzufügen</button></div></div></section>';
+  h += '<section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Strafen</h2><span class="muted" style="font-size:13px">Änderungen gelten für den laufenden und alle neuen Abende</span></div><div class="list">' +
+    cfg.penalties.map(p => '<div class="adm"><button class="icon-btn" data-act="emoji" data-id="' + p.id + '" aria-label="Symbol wechseln">' + esc(p.emoji || '•') + '</button><input type="text" id="pen-' + p.id + '" value="' + esc(p.name) + '" data-chg="penname" data-id="' + p.id + '" aria-label="Name der Strafe">' + stepper('pencents', p.id, p.cents, 10) + '<button class="toggle" data-act="penmode" data-id="' + p.id + '" aria-pressed="' + (p.mode === 'others') + '">' + (p.mode === 'others' ? 'zahlen alle anderen' : 'zahlt Werfer') + '</button>' + delBtn('pendel', p.id, 'Entfernen') + '</div>').join('') +
+    '<div class="adm"><input type="text" id="newPen" placeholder="Neue Strafe, z. B. Pumpe" aria-label="Neue Strafe"><button class="btn primary" data-act="addPen">Hinzufügen</button></div></div></section>';
+  h += '<section style="display:flex;flex-direction:column;gap:10px"><h2>Regeln</h2><div class="list">' +
+    '<div class="adm"><span class="grow" style="flex:1">Startgeld</span>' + stepper('rule', 'startgeld', R.startgeld, 50) + '</div>' +
+    '<div class="adm"><span style="flex:1">Startgeld auch bei Abwesenheit</span><button class="toggle" data-act="ruleToggle" data-id="startgeldForAbsent" aria-pressed="' + R.startgeldForAbsent + '">' + (R.startgeldForAbsent ? 'ja' : 'nein') + '</button></div>' +
+    '<div class="adm"><span style="flex:1">Fehlen ohne Abmeldung (zusätzlich zu Ø)</span>' + stepper('rule', 'absentFee', R.absentFee, 50) + '</div>' +
+    '<div class="adm"><span style="flex:1">Zahlungsfrist</span><span class="stepper"><button data-act="days" data-d="-7">−</button><span>' + R.overdueDays + ' Tage</span><button data-act="days" data-d="7">+</button></span></div>' +
+    '<div class="adm"><span style="flex:1">Mahngebühr nach Frist</span>' + stepper('rule', 'overdueFee', R.overdueFee, 50) + '</div>' +
+    '<div class="adm"><span style="flex:1">Name des Clubs</span><input type="text" id="clubInput" value="' + esc(cfg.club) + '" data-chg="club" aria-label="Clubname"></div>' +
+    '</div></section>';
+  h += '<section style="display:flex;flex-direction:column;gap:10px"><h2>Daten</h2><div class="card" style="display:flex;flex-direction:column;gap:12px">' +
+    '<p class="muted" style="margin:0">' + (S.mode === 'db' ? 'Die Daten werden geteilt gespeichert: Alle, mit denen du diese Seite teilst und die bearbeiten dürfen, sehen dieselbe Liste.' : 'Die Daten liegen auf diesem Gerät. Mit einer Sicherung kannst du sie auf ein anderes Gerät übertragen.') + '</p>' +
+    '<div class="row"><button class="btn" data-act="exportXlsxAll">Alle Abende als Excel</button><button class="btn" data-act="exportPdfAll">Alle Abende als PDF</button></div>' +
+    '<div class="row"><button class="btn" data-act="backup">Sicherung speichern</button><label class="btn" for="importFile" style="cursor:pointer">Sicherung laden</label><input type="file" id="importFile" accept=".json,application/json" hidden></div>' +
+    (S.pendingImport ? '<div class="banner"><span>Sicherung vom ' + fmtDate(S.pendingImport.date) + ' mit ' + Object.keys(S.pendingImport.games).length + ' Abenden laden? Die aktuellen Daten werden ersetzt.</span><span class="row"><button class="btn" data-act="cancelImport">Abbrechen</button><button class="btn primary" data-act="doImport">Laden</button></span></div>' : '') +
+    (Object.values(S.games).some(g => g.example) ? '<div>' + delBtn('delExamples','all','Beispielabende löschen') + '</div>' : '') + '</div></section>';
+  return h;
+}
+
+/* ----- Sheets ----- */
+function renderSheet(){
+  const host = $('#sheetHost');
+  if(!S.sheet){ host.innerHTML = ''; return; }
+  let inner = '';
+  if(S.sheet.type === 'player') inner = sheetPlayer();
+  else if(S.sheet.type === 'roster') inner = sheetRoster();
+  else if(S.sheet.type === 'debtor') inner = sheetDebtor();
+  if(!inner){ S.sheet = null; host.innerHTML = ''; return; }
+  const scroll = host.querySelector('.sheet') ? host.querySelector('.sheet').scrollTop : 0;
+  host.innerHTML = '<div class="scrim" data-act="closeSheet"><div class="sheet" role="dialog" aria-modal="true"><span class="grab"></span>' + inner + '<button class="btn big" data-act="closeSheet">Fertig</button></div></div>';
+  host.querySelector('.sheet').scrollTop = scroll;
+}
+function sheetPlayer(){
+  const g = S.games[S.sheet.gid]; if(!g) return '';
+  const r = g.roster.find(x => x.id === S.sheet.pid); if(!r) return '';
+  const c = calc(g), o = c.rows[r.id];
+  const ro = S.readOnly;
+  let h = '<div class="spread"><h2>' + esc(r.name) + '</h2><span class="lane-total num">' + eur(o.total + o.fee) + '</span></div>';
+  h += '<div class="segctl">' + [['present','Anwesend'],['excused','Entschuldigt'],['absent','Unentschuldigt']].map(([k,l]) => '<button class="' + k + '" data-act="setAtt" data-v="' + k + '" aria-pressed="' + (r.att === k) + '"' + (ro ? ' disabled' : '') + '>' + l + '</button>').join('') + '</div>';
+  if(r.att === 'present'){
+    h += '<div>' + g.penalties.map(p => { const n = (g.counts[r.id] || {})[p.id] || 0; return '<div class="penrow"><span class="e">' + esc(p.emoji || '•') + '</span><span class="grow"><b>' + esc(p.name) + '</b><small>' + eur(p.cents) + (p.mode === 'others' ? ' für alle anderen' : '') + '</small></span><span class="stepper"><button data-act="adj" data-pen="' + p.id + '" data-d="-1" aria-label="weniger"' + (ro ? ' disabled' : '') + '>−</button><span>' + n + '</span><button data-act="adj" data-pen="' + p.id + '" data-d="1" aria-label="mehr"' + (ro ? ' disabled' : '') + '>+</button></span></div>'; }).join('') + '</div>';
+  } else {
+    h += '<p class="muted" style="margin:0">' + (r.att === 'excused' ? 'Zahlt den Durchschnitt des Abends (' + eur(c.avg) + ').' : 'Zahlt ' + eur(g.rules.absentFee) + ' plus den Durchschnitt des Abends (' + eur(c.avg) + ').') + '</p>';
+  }
+  h += '<div class="card" style="display:flex;flex-direction:column;gap:6px;background:var(--surface-2)">' +
+    line('Startgeld', o.start) + (o.pen ? line('Strafen (inkl. von anderen)', o.pen) : '') + (o.absence ? line('Abwesenheit', o.absence) : '') + (o.fee ? line('Mahngebühr', o.fee) : '') + line('Bezahlt', -o.paid) +
+    '<div class="spread"><b>Noch offen</b><b class="num" style="color:' + (o.open ? 'var(--accent)' : 'var(--good)') + '">' + eur(o.open) + '</b></div></div>';
+  h += '<div class="row"><button class="btn ' + (o.open ? 'good' : '') + '" data-act="togglePaid" data-gid="' + g.id + '" data-pid="' + r.id + '"' + (ro ? ' disabled' : '') + '>' + (o.open ? 'Alles bezahlt' : 'Zahlung zurücksetzen') + '</button><span class="stepper"><button data-act="paidStep" data-d="-50" aria-label="50 Cent weniger bezahlt"' + (ro ? ' disabled' : '') + '>−</button><span>' + eur(o.paid) + '</span><button data-act="paidStep" data-d="50" aria-label="50 Cent mehr bezahlt"' + (ro ? ' disabled' : '') + '>+</button></span></div>';
+  return h;
+}
+const line = (l, c) => '<div class="spread"><span class="muted">' + l + '</span><span class="num">' + eur(c) + '</span></div>';
+function sheetRoster(){
+  const g = S.games[S.sheet.gid]; if(!g) return '';
+  const label = {present:'Anwesend', excused:'Entschuldigt', absent:'Unentschuldigt', out:'Nicht auf der Liste'};
+  const act = S.config.players.filter(p => p.active || g.roster.some(r => r.id === p.id));
+  return '<h2>Teilnehmer</h2><p class="muted" style="margin:0">Tippen zum Wechseln. Wer schon Strafen hat, kann nicht von der Liste genommen werden.</p><div class="att">' +
+    act.map(p => { const r = g.roster.find(x => x.id === p.id); const a = r ? r.att : 'out'; return '<button class="' + a + '" data-act="rosterCycle" data-pid="' + p.id + '"><b>' + esc(p.name) + '</b><span>' + label[a] + '</span></button>'; }).join('') + '</div>';
+}
+function sheetDebtor(){
+  const pid = S.sheet.pid;
+  const items = gamesSorted().map(g => ({g, c:calc(g)})).filter(x => x.c.rows[pid] && x.c.rows[pid].open > 0);
+  if(!items.length) return '<h2>Alles beglichen</h2><p class="muted">Keine offenen Beträge mehr.</p>';
+  const name = items[0].c.rows[pid].name;
+  const sum = items.reduce((s,x) => s + x.c.rows[pid].open, 0);
+  return '<div class="spread"><h2>' + esc(name) + '</h2><span class="lane-total num">' + eur(sum) + '</span></div><div class="list">' +
+    items.map(x => { const o = x.c.rows[pid]; return '<div class="li"><span class="grow"><b>' + fmtDate(x.g.date) + '</b><small>gesamt ' + eur(o.total + o.fee) + (o.overdue ? ' · inkl. Mahngebühr' : '') + '</small></span><span class="pill bad num">' + eur(o.open) + '</span><button class="btn good" data-act="togglePaid" data-gid="' + x.g.id + '" data-pid="' + pid + '">Bezahlt</button></div>'; }).join('') +
+    '</div><button class="btn primary big" data-act="payAll" data-pid="' + pid + '">Alles begleichen (' + eur(sum) + ')</button>';
+}
+
+/* ---------- actions ---------- */
+const EMOJIS = ['🕳️','🎳','🥚','🐌','🔔','😩','⏰','🍺','💸','🎯','🔥','🐢','🙈','🍻','💥','🎲','🐷','⭐'];
+function setPaid(g, pid, full){
+  const c = calc(g), o = c.rows[pid];
+  g.paid = g.paid || {}; g.fees = g.fees || {};
+  if(full){ g.fees[pid] = o.fee; g.paid[pid] = o.total + o.fee; }
+  else { delete g.paid[pid]; delete g.fees[pid]; }
+  touch(g);
+}
+function act(a, el){
+  const d = el.dataset;
+  const g = currentGame();
+  switch(a){
+    case 'tab': S.tab = d.tab; lsSet('kl.tab', S.tab); S.sheet = null; S.armed = null; if(d.tab === 'abend' && S.viewGameId && openGame() && S.games[S.viewGameId].status === 'closed') {} break;
+    case 'sound': S.sound = !S.sound; lsSet('kl.sound', S.sound); if(S.sound) clack(); break;
+    case 'loadTemplate': S.config = defaultConfig(); persist('config'); break;
+    case 'draftAtt': { const order = ['present','excused','absent','out']; const cur = S.draft.att[d.pid] || 'present'; S.draft.att[d.pid] = order[(order.indexOf(cur)+1) % 4]; break; }
+    case 'draftAll': S.draft.att = {}; break;
+    case 'startGame': startGame(); break;
+    case 'newGame': S.viewGameId = null; S.draft = null; S.tab = 'abend'; break;
+    case 'openGame': S.viewGameId = d.gid; S.tab = 'abend'; lsSet('kl.tab','abend'); main().scrollTop = 0; break;
+    case 'backToCurrent': S.viewGameId = null; break;
+    case 'selPen': S.selPen = d.pen; clack(); break;
+    case 'tap': {
+      if(!g || g.status !== 'open') return;
+      const pen = g.penalties.find(p => p.id === S.selPen); if(!pen) return;
+      const r = g.roster.find(x => x.id === d.pid);
+      addPen(g, d.pid, pen.id, 1, true);
+      if(S.readOnly) return;
+      const big = pen.id === 'neun';
+      buzz(big ? [20,40,20,40,60] : pen.id === 'gosse' ? [60,80,120] : 12);
+      sfx(PEN_FX[pen.id] || 'clack');
+      render();
+      animTap(g, d.pid, pen);
+      if(big){ confetti(110); banner('ALLE NEUNE!', '🎳'); }
+      toast((pen.mode === 'others' ? r.name + ': ' : r.name + ' · ') + quip(pen), true);
+      wake();
+      return;
+    }
+    case 'undo': {
+      const u = S.undo.pop(); if(!u || !S.games[u.gid]) return;
+      addPen(S.games[u.gid], u.pid, u.penId, -1, false);
+      $('#toastHost').innerHTML = '';
+      toast('Rückgängig gemacht.');
+      break;
+    }
+    case 'player': { const gg = g; if(!gg) return; S.sheet = {type:'player', gid:gg.id, pid:d.pid}; break; }
+    case 'roster': if(g) S.sheet = {type:'roster', gid:g.id}; break;
+    case 'debtor': S.sheet = {type:'debtor', pid:d.pid}; break;
+    case 'closeSheet': if(el.classList.contains('scrim') && el !== evTarget) return; S.sheet = null; break;
+    case 'setAtt': { const gg = S.games[S.sheet.gid]; const r = gg.roster.find(x => x.id === S.sheet.pid); r.att = d.v; touch(gg); break; }
+    case 'adj': { const gg = S.games[S.sheet.gid]; addPen(gg, S.sheet.pid, d.pen, +d.d, false); break; }
+    case 'paidStep': { const gg = S.games[S.sheet.gid]; gg.paid = gg.paid || {}; gg.paid[S.sheet.pid] = Math.max(0, (gg.paid[S.sheet.pid] || 0) + (+d.d)); touch(gg); break; }
+    case 'togglePaid': { const gg = S.games[d.gid]; const o = calc(gg).rows[d.pid]; setPaid(gg, d.pid, o.open > 0); if(o.open > 0){ sfx('kaching'); buzz(15); toast(pick(['Kasse sagt danke!','Bezahlt. Schulden ade!','Klingeling, bezahlt.'])); } break; }
+    case 'payAll': { gamesSorted().forEach(gg => { const o = calc(gg).rows[d.pid]; if(o && o.open > 0) setPaid(gg, d.pid, true); }); confetti(50); sfx('kaching'); toast('Alles beglichen. Respekt!'); S.sheet = null; break; }
+    case 'rosterCycle': {
+      const gg = S.games[S.sheet.gid]; const order = ['present','excused','absent','out'];
+      let r = gg.roster.find(x => x.id === d.pid);
+      const cur = r ? r.att : 'out'; const nxt = order[(order.indexOf(cur)+1) % 4];
+      const hasCounts = gg.counts[d.pid] && Object.values(gg.counts[d.pid]).some(v => v > 0);
+      if(nxt === 'out'){ if(hasCounts || (gg.paid && gg.paid[d.pid])){ r.att = 'present'; toast('Hat schon Einträge – bleibt auf der Liste.'); } else gg.roster = gg.roster.filter(x => x.id !== d.pid); }
+      else if(!r){ const p = S.config.players.find(x => x.id === d.pid); gg.roster.push({id:p.id, name:p.name, att:nxt}); }
+      else r.att = nxt;
+      touch(gg); break;
+    }
+    case 'endGame': if(!g) return; g.status = 'closed'; touch(g); S.viewGameId = g.id; confetti(120); sfx('fanfare'); buzz([30,50,30,50,80]); { const lmE = listMaker(g); setTimeout(() => banner(lmE ? lmE.r.name + ' schreibt!' : 'Feierabend!', '📝'), 300); } toast('Abend beendet. Gut Holz bis zum nächsten Mal!'); main().scrollTop = 0; break;
+    case 'reopen': { const gg = S.games[d.gid]; if(openGame() && openGame().id !== gg.id){ toast('Es läuft schon ein anderer Abend.'); return; } gg.status = 'open'; touch(gg); S.viewGameId = gg.id; break; }
+    case 'arm': S.armed = d.key; setTimeout(() => { if(S.armed === d.key){ S.armed = null; render(); } }, 4000); break;
+    case 'delGame': { S.armed = null; deleting.add(d.id); delete S.games[d.id]; persist('game:' + d.id); S.viewGameId = null; toast('Abend gelöscht.'); break; }
+    case 'delExamples': { S.armed = null; Object.values(S.games).filter(x => x.example).forEach(x => { deleting.add(x.id); delete S.games[x.id]; persist('game:' + x.id); }); S.viewGameId = null; toast('Beispielabende gelöscht.'); break; }
+    case 'range': S.statRange = d.r; break;
+    case 'metric': S.statMetric = d.m; break;
+    case 'addPlayer': { const inp = $('#newPlayer'); const n = inp.value.trim(); if(!n){ inp.focus(); return; } let id = slug(n); while(S.config.players.some(p => p.id === id)) id += '-2'; S.config.players.push({id, name:n, active:true}); persist('config'); inp.value=''; inp.blur(); toast(n + ' ist jetzt dabei!'); break; }
+    case 'pactive': { const p = S.config.players.find(x => x.id === d.id); p.active = !p.active; persist('config'); break; }
+    case 'pdel': { S.armed = null; S.config.players = S.config.players.filter(x => x.id !== d.id); persist('config'); toast('Entfernt. Vergangene Abende bleiben erhalten.'); break; }
+    case 'addPen': { const inp = $('#newPen'); const n = inp.value.trim(); if(!n){ inp.focus(); return; } let id = slug(n); while(S.config.penalties.some(p => p.id === id)) id += '-2'; S.config.penalties.push({id, name:n, cents:50, mode:'self', emoji:pick(EMOJIS)}); persist('config'); syncOpenGames(); inp.value=''; inp.blur(); break; }
+    case 'pencents': { const p = S.config.penalties.find(x => x.id === d.id); p.cents = Math.max(0, p.cents + (+d.d)); persist('config'); syncOpenGames(); break; }
+    case 'penmode': { const p = S.config.penalties.find(x => x.id === d.id); p.mode = p.mode === 'others' ? 'self' : 'others'; persist('config'); syncOpenGames(); break; }
+    case 'pendel': { S.armed = null; S.config.penalties = S.config.penalties.filter(x => x.id !== d.id); persist('config'); syncOpenGames(); break; }
+    case 'emoji': { const p = S.config.penalties.find(x => x.id === d.id); p.emoji = EMOJIS[(EMOJIS.indexOf(p.emoji)+1) % EMOJIS.length]; persist('config'); syncOpenGames(); break; }
+    case 'rule': { const R = S.config.rules; R[d.id] = Math.max(0, R[d.id] + (+d.d)); persist('config'); syncOpenGames(); break; }
+    case 'ruleToggle': { const R = S.config.rules; R[d.id] = !R[d.id]; persist('config'); syncOpenGames(); break; }
+    case 'days': { const R = S.config.rules; R.overdueDays = Math.max(7, R.overdueDays + (+d.d)); persist('config'); syncOpenGames(); break; }
+    case 'applyUpdate': savePrefsNow(); if(swReg && swReg.waiting) swReg.waiting.postMessage('skipWaiting'); else location.reload(); return;
+    case 'dismissHint': S.hintDismissed = true; lsSet('kl.hint', true); break;
+    case 'install': { const ev = S.installEvt; S.installEvt = null; if(ev){ ev.prompt(); ev.userChoice.then(c => { if(c.outcome !== 'accepted'){ S.hintDismissed = true; render(); } }).catch(() => {}); } break; }
+    case 'backup': {
+      const data = JSON.stringify({app:'kegelliste', version:1, exportedAt:todayISO(), config:S.config, games:S.games}, null, 1);
+      saveFile('Kegelliste_Sicherung_' + todayISO() + '.json', new Blob([data], {type:'application/json'}));
+      return;
+    }
+    case 'cancelImport': S.pendingImport = null; break;
+    case 'doImport': {
+      const imp = S.pendingImport; S.pendingImport = null; if(!imp) break;
+      const old = Object.keys(S.games);
+      S.config = imp.config; S.games = imp.games;
+      Object.entries(S.games).forEach(([k, x]) => { x.id = k; });
+      persist('config');
+      Object.keys(S.games).forEach(id => persist('game:' + id));
+      old.filter(id => !S.games[id]).forEach(id => { deleting.add(id); persist('game:' + id); });
+      S.viewGameId = null; toast('Sicherung geladen.'); sfx('kaching');
+      break;
+    }
+    case 'exportXlsx': exportXlsx([S.games[d.gid]]); return;
+    case 'exportPdf': exportPdf([S.games[d.gid]]); return;
+    case 'exportXlsxAll': exportXlsx(gamesSorted().slice().reverse()); return;
+    case 'exportPdfAll': exportPdf(gamesSorted().slice().reverse()); return;
+    default: return;
+  }
+  render();
+}
+const main = () => $('#main');
+const tileEl = id => document.querySelector('.tile[data-pid="' + CSS.escape(id) + '"]');
+function spawn(tile, txt, cls, style){
+  const s = document.createElement('span'); s.className = 'fx ' + cls; s.textContent = txt; s.setAttribute('aria-hidden','true');
+  if(style) Object.assign(s.style, style);
+  tile.appendChild(s); setTimeout(() => s.remove(), 2600);
+}
+const TILE_FX = {
+  gosse(t){ t.classList.add('sad'); spawn(t, '🌧️', 'cloud'); for(let i=0;i<4;i++) spawn(t, '💧', 'drop', {left:(18 + i*20) + '%', animationDelay:(.25 + i*.18) + 's'}); spawn(t, '😢', 'emo', {animationDelay:'.3s'}); },
+  neun(t){ t.classList.add('bump'); spawn(t, '🎳', 'emo big'); spawn(t, '⭐', 'spark', {left:'15%'}); spawn(t, '⭐', 'spark', {left:'75%', animationDelay:'.15s'}); },
+  null(t){ t.classList.add('squash'); spawn(t, '🥚', 'emo'); },
+  liegen(t){ t.classList.add('bump'); spawn(t, '🐌', 'crawl'); },
+  klingeln(t){ t.classList.add('ring'); spawn(t, '🔔', 'emo swing'); },
+  verlierer(t){ t.classList.add('sad'); spawn(t, '😩', 'emo'); spawn(t, '🏳️', 'emo', {left:'20%', animationDelay:'.2s'}); },
+  spaet(t){ t.classList.add('ring'); spawn(t, '⏰', 'emo swing'); },
+  krug(t){ t.classList.add('bump'); spawn(t, '🍺', 'emo big'); for(let i=0;i<4;i++) spawn(t, '🫧', 'emo small', {left:(20 + i*18) + '%', animationDelay:(.1 + i*.12) + 's'}); },
+  kasse(t){ t.classList.add('bump'); for(let i=0;i<3;i++) spawn(t, '💸', 'fly', {animationDelay:(i*.15) + 's', top:(25 + i*15) + '%'}); }
+};
+function animTap(g, pid, pen){
+  const others = pen.mode === 'others';
+  const targets = others ? g.roster.filter(r => r.att === 'present' && r.id !== pid).map(r => r.id) : [pid];
+  targets.forEach(id => {
+    const t = tileEl(id); if(!t) return;
+    if(!others) (TILE_FX[pen.id] || (x => { x.classList.add('bump'); spawn(x, pen.emoji || '💥', 'emo'); }))(t);
+    else t.classList.add('bump');
+    spawn(t, '+' + eur(pen.cents), 'float');
+  });
+  if(others){ const t = tileEl(pid); if(t){ (TILE_FX[pen.id] || (x => spawn(x, pen.emoji || '⭐', 'emo big')))(t); t.classList.add('hero'); } }
+}
+function banner(text, emoji){
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.banner-fx').forEach(x => x.remove());
+  const b = document.createElement('div'); b.className = 'banner-fx'; b.innerHTML = '<span>' + esc(emoji || '') + '</span>' + esc(text);
+  document.body.appendChild(b); setTimeout(() => b.remove(), 1800);
+}
+
+/* ---------- events ---------- */
+let evTarget = null, lpTimer = null, lpFired = false;
+document.addEventListener('click', e => {
+  if(lpFired){ lpFired = false; e.preventDefault(); return; }
+  evTarget = e.target;
+  const el = e.target.closest('[data-act]');
+  if(!el) return;
+  if(el.classList.contains('scrim') && e.target !== el) return;
+  act(el.dataset.act, el);
+});
+document.addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('tile')){ e.preventDefault(); act('tap', e.target); }
+  if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); }
+  if(e.key === 'Enter' && e.target.id === 'newPlayer') act('addPlayer', e.target);
+  if(e.key === 'Enter' && e.target.id === 'newPen') act('addPen', e.target);
+});
+document.addEventListener('pointerdown', e => {
+  lpFired = false; clearTimeout(lpTimer);
+  const t = e.target.closest('.tile'); if(!t || e.target.closest('.more')) return;
+  lpTimer = setTimeout(() => { lpFired = true; clack(); act('player', t); }, 480);
+});
+['pointerup','pointercancel','pointerleave'].forEach(n => document.addEventListener(n, () => clearTimeout(lpTimer)));
+document.addEventListener('contextmenu', e => { if(e.target.closest('.tile')) e.preventDefault(); });
+document.addEventListener('change', e => {
+  const el = e.target;
+  if(el.id === 'importFile' && el.files && el.files[0]){
+    const f = el.files[0]; el.value = '';
+    f.text().then(txt => {
+      let d = null; try{ d = JSON.parse(txt); }catch(err){}
+      if(!d || d.app !== 'kegelliste' || !d.config || !Array.isArray(d.config.players) || typeof d.games !== 'object'){ toast('Diese Datei ist keine Kegelliste-Sicherung.'); return; }
+      S.pendingImport = {date:d.exportedAt || todayISO(), config:d.config, games:d.games || {}}; render();
+    });
+    return;
+  }
+  const k = el.dataset.chg; if(!k) return;
+  if(k === 'draftDate'){ S.draft.date = el.value || todayISO(); }
+  else if(k === 'listMaker'){ const g = S.games[el.dataset.gid]; g.listMaker = el.value || null; touch(g); }
+  else if(k === 'pname'){ const p = S.config.players.find(x => x.id === el.dataset.id); const v = el.value.trim(); if(v){ p.name = v; persist('config'); const og = openGame(); if(og){ const r = og.roster.find(x => x.id === p.id); if(r){ r.name = v; touch(og); } } } }
+  else if(k === 'penname'){ const p = S.config.penalties.find(x => x.id === el.dataset.id); const v = el.value.trim(); if(v){ p.name = v; persist('config'); syncOpenGames(); } }
+  else if(k === 'club'){ const v = el.value.trim(); if(v){ S.config.club = v; persist('config'); } }
+  render();
+});
+document.addEventListener('focusout', () => setTimeout(() => { if(S.renderPending && !isTyping()) render(); }, 0));
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') savePrefsNow(); if(document.visibilityState === 'visible' && currentGame() && currentGame().status === 'open') wake(); });
+
+/* ---------- export ---------- */
+const LIBS = {
+  xlsx:['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'],
+  pdf:['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js']
+};
+const loaded = {};
+function loadScript(src){ return loaded[src] || (loaded[src] = new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => { s.remove(); delete loaded[src]; rej(new Error('load')); }; document.head.appendChild(s); })); }
+async function loadLib(k){
+  for(const s of LIBS[k]){
+    if(NATIVE){ try{ await loadScript('lib/' + s.split('/').pop()); continue; }catch(e){} } // bundled in the app, works offline
+    await loadScript(s);
+  }
+}
+const blobToB64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+async function saveFile(filename, blob){
+  if(NATIVE && plug('Filesystem') && plug('Share')){
+    try{
+      const w = await plug('Filesystem').writeFile({path:filename, data:await blobToB64(blob), directory:'CACHE'});
+      await plug('Share').share({title:filename, url:w.uri, dialogTitle:'Kegelliste speichern oder teilen'});
+    }catch(e){ if(!/cancel/i.test(String(e && (e.message || e)))) toast('Teilen nicht möglich: ' + (e && e.message || 'Fehler')); }
+    return;
+  }
+  let dl = null;
+  if(window.claude && typeof window.claude.use === 'function'){ try{ dl = await window.claude.use('downloads'); }catch(e){} }
+  if(dl){
+    try{ await dl.save({filename, data:blob}); toast('Gespeichert: ' + filename); }
+    catch(e){ if(e && e.code !== 'declined') toast('Download nicht möglich (' + (e.code || 'Fehler') + ').'); }
+    return;
+  }
+  if(PWA && window.matchMedia && matchMedia('(pointer: coarse)').matches && navigator.canShare && window.File){
+    const file = new File([blob], filename, {type: blob.type || 'application/octet-stream'});
+    if(navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:filename}); }
+      catch(e){ if(e && e.name !== 'AbortError') toast('Teilen nicht möglich.'); }
+      return;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('Gespeichert: ' + filename);
+}
+function tableFor(g){
+  const c = calc(g);
+  const att = {present:'anwesend', excused:'entschuldigt', absent:'unentschuldigt'};
+  const head = ['Name','Status','Startgeld'].concat(g.penalties.map(p => p.name + ' (' + eur(p.cents) + (p.mode === 'others' ? ', alle anderen' : '') + ')')).concat(['Strafen €','Abwesenheit €','Mahnung €','Gesamt €','Bezahlt €','Offen €']);
+  const rows = rosterOrdered(g).map(r => { const o = c.rows[r.id]; return [r.name, att[r.att], o.start/100].concat(g.penalties.map(p => o.cnt[p.id] || '')).concat([o.pen/100, o.absence/100, o.fee/100, (o.total + o.fee)/100, o.paid/100, o.open/100]); });
+  return {c, head, rows};
+}
+async function exportXlsx(games){
+  games = games.filter(Boolean); if(!games.length){ toast('Keine Abende zum Exportieren.'); return; }
+  toast('Excel wird erstellt…');
+  try{ await loadLib('xlsx'); }catch(e){ toast('Excel-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
+  const wb = XLSX.utils.book_new();
+  const money = '#,##0.00 "€"';
+  if(games.length > 1){
+    const players = {}; games.forEach(g => g.roster.forEach(r => players[r.id] = r.name));
+    const ids = Object.keys(players).sort((a,b) => players[a].localeCompare(players[b],'de'));
+    const cs = games.map(calc);
+    const aoa = [['Name'].concat(games.map(g => fmtDate(g.date))).concat(['Summe','Offen'])];
+    ids.forEach(id => { let sum = 0, op = 0; const row = [players[id]]; cs.forEach(c => { const o = c.rows[id]; row.push(o ? (o.total + o.fee)/100 : ''); if(o){ sum += o.total + o.fee; op += o.open; } }); row.push(sum/100, op/100); aoa.push(row); });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    fmtMoney(ws, aoa, 1, money); ws['!cols'] = [{wch:14}].concat(aoa[0].slice(1).map(() => ({wch:11})));
+    XLSX.utils.book_append_sheet(wb, ws, 'Übersicht');
+  }
+  const used = {};
+  games.forEach(g => {
+    const t = tableFor(g);
+    const aoa = [['Kegelclub ' + S.config.club + ' – Kegelliste ' + fmtDate(g.date)], []].concat([t.head]).concat(t.rows).concat([[], ['Durchschnitt Ø (ohne Startgeld)', '', t.c.avg/100], ['Kasse gesamt', '', t.c.total/100], ['Noch offen', '', t.c.open/100], ['Zahlungsfrist', '', g.rules.overdueDays + ' Tage, sonst ' + eur(g.rules.overdueFee)]]);
+    const lm = listMaker(g, t.c); if(lm) aoa.push(['Nächste Liste macht', '', lm.r.name]);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    fmtMoney(ws, aoa, 2, money, t.head);
+    ws['!cols'] = [{wch:14},{wch:14}].concat(t.head.slice(2).map(h => ({wch: Math.min(22, Math.max(9, h.length * .7))})));
+    let name = g.date; let i = 2; while(used[name]) name = g.date + ' (' + (i++) + ')'; used[name] = 1;
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  });
+  const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  const fn = 'Kegelliste_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.xlsx';
+  saveFile(fn, new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+}
+function fmtMoney(ws, aoa, headRow, z, head){
+  const nPen = head ? head.length - 9 : 0;
+  const lastDataRow = head ? headRow + aoa.slice(headRow + 1).findIndex(r => r.length === 0) : aoa.length;
+  for(let r = headRow; r < aoa.length; r++) for(let col = 0; col < aoa[r].length; col++){
+    if(typeof aoa[r][col] !== 'number') continue;
+    const isCount = head && r <= lastDataRow && col >= 3 && col < 3 + nPen;
+    const cell = ws[XLSX.utils.encode_cell({r, c:col})];
+    if(cell && !isCount) cell.z = z;
+  }
+}
+async function exportPdf(games){
+  games = games.filter(Boolean); if(!games.length){ toast('Keine Abende zum Exportieren.'); return; }
+  toast('PDF wird erstellt…');
+  try{ await loadLib('pdf'); }catch(e){ toast('PDF-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const red = [217,58,43], wood = [185,120,63];
+  const num = v => typeof v === 'number' ? v.toLocaleString('de-DE',{minimumFractionDigits:2, maximumFractionDigits:2}) + ' €' : v;
+  games.forEach((g, gi) => {
+    if(gi) doc.addPage();
+    const t = tableFor(g);
+    doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,24,39);
+    doc.text('Kegelclub ' + S.config.club, 14, 16);
+    doc.setFontSize(12); doc.setFont('helvetica','normal'); doc.setTextColor(90,99,119);
+    doc.text('Kegelliste vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')', 14, 23);
+    doc.setTextColor(...red); doc.setFont('helvetica','bold');
+    doc.text('Kasse: ' + eur(t.c.total) + '   ·   Ø ohne Startgeld: ' + eur(t.c.avg) + '   ·   offen: ' + eur(t.c.open), 283, 23, {align:'right'});
+    const nPen = g.penalties.length;
+    doc.autoTable({
+      startY: 28,
+      head: [t.head.map(h => h.replace(/ \(/, '\n('))],
+      body: t.rows.map(r => r.map((v, i) => (i >= 2 && i < 3) || i >= 3 + nPen ? num(v) : v)),
+      theme:'grid', styles:{fontSize:7.5, cellPadding:1.6, valign:'middle', lineColor:[217,222,232]},
+      headStyles:{fillColor:wood, textColor:255, fontSize:7, halign:'center'},
+      columnStyles: Object.fromEntries(t.head.map((h,i) => [i, i < 2 ? {halign:'left'} : {halign: i >= 3 + nPen ? 'right' : 'center'}])),
+      didParseCell: data => { if(data.section === 'body' && data.column.index === t.head.length - 1 && t.rows[data.row.index][data.column.index] > 0){ data.cell.styles.textColor = red; data.cell.styles.fontStyle = 'bold'; } },
+      margin:{left:14, right:14}
+    });
+    let y = doc.lastAutoTable.finalY + 8;
+    doc.setFontSize(9.5); doc.setTextColor(90,99,119); doc.setFont('helvetica','normal');
+    const lm = listMaker(g, t.c);
+    doc.text('Zahlungsfrist: ' + g.rules.overdueDays + ' Tage, danach ' + eur(g.rules.overdueFee) + '.  Fehlen mit Abmeldung: Ø.  Ohne Abmeldung: ' + eur(g.rules.absentFee) + ' + Ø.' + (lm ? '   Nächste Liste: ' + lm.r.name : ''), 14, Math.min(y, 200));
+  });
+  const pages = doc.getNumberOfPages();
+  for(let i = 1; i <= pages; i++){ doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.text('Seite ' + i + ' von ' + pages + ' · erstellt ' + fmtDate(todayISO()), 283, 205, {align:'right'}); }
+  const fn = 'Kegelliste_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.pdf';
+  saveFile(fn, doc.output('blob'));
+}
+
+/* ---------- PWA: offline cache, updates, install ---------- */
+let swReg = null;
+function setupPwa(){
+  try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); S.installEvt = e; render(); });
+  window.addEventListener('appinstalled', () => { S.installEvt = null; S.hintDismissed = true; render(); toast('Installiert! Die Kegelliste ist jetzt auf dem Home-Bildschirm.'); });
+  if(!('serviceWorker' in navigator)) return;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) return; reloading = true; savePrefsNow(); location.reload(); });
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    swReg = reg;
+    const mark = w => { if(w && navigator.serviceWorker.controller){ S.updateReady = true; render(); } };
+    if(reg.waiting) mark(reg.waiting);
+    reg.addEventListener('updatefound', () => { const w = reg.installing; w && w.addEventListener('statechange', () => { if(w.state === 'installed') mark(w); }); });
+    setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') reg.update().catch(() => {}); });
+  }).catch(() => {});
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  render();
+  if(NATIVE || PWA){
+    S.mode = 'native';
+    S.hintDismissed = !!lsGet('kl.hint');
+    await loadLocal(); S.loading = false; render();
+    if(PWA) setupPwa();
+    return;
+  }
+  let tries = 0;
+  while(!(window.claude && typeof window.claude.use === 'function') && tries < 3){ await new Promise(r => setTimeout(r, 150)); tries++; }
+  let db = null;
+  if(window.claude && typeof window.claude.use === 'function'){ try{ db = await window.claude.use('db'); }catch(e){ db = null; } }
+  if(db){ S.mode = 'db'; S.db = db; subscribe(); }
+  else { S.mode = 'local'; await loadLocal(); S.loading = false; render(); }
+}
+boot();
+})();
+</script>

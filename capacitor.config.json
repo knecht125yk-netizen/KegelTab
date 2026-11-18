@@ -1,0 +1,9 @@
+{
+  "appId": "de.umwerfenden.kegelliste",
+  "appName": "Kegelliste",
+  "webDir": "www",
+  "backgroundColor": "#d93a2b",
+  "ios": {
+    "contentInset": "never"
+  }
+}

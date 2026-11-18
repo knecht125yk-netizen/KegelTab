@@ -1,0 +1,25 @@
+{
+  "name": "kegelliste",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kegelliste der Umwerfenden – App für iPad, iPhone und Android",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-web.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/preferences": "^7.0.0",
+    "@capacitor/share": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0",
+    "jspdf": "2.5.1",
+    "jspdf-autotable": "3.8.2",
+    "xlsx": "0.18.5"
+  }
+}

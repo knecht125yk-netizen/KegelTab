@@ -1,0 +1,42 @@
+# KOSTENLOS: veröffentlicht die Kegelliste als installierbare Web-App bei GitHub Pages.
+# Startet automatisch, sobald kegelliste.html (oder etwas im Ordner pwa/) hochgeladen wird.
+name: "Web-App veröffentlichen (iPhone + Android, kostenlos)"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - kegelliste.html
+      - pwa/**
+      - scripts/build-pwa.ps1
+      - .github/workflows/web-app.yml
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Web-App bauen
+        shell: pwsh
+        run: ./scripts/build-pwa.ps1 -Build "${{ github.run_number }}-${{ github.run_attempt }}"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Adresse anzeigen
+        run: echo "Die Kegelliste ist online unter ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
