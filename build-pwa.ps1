@@ -1,15 +1,26 @@
 # Baut die installierbare Web-App (PWA) in den Ordner "site".
 # Läuft auf Windows (PowerShell) und bei GitHub (pwsh). Keine weiteren Programme nötig.
+# Findet die Dateien sowohl in den Unterordnern (pwa/, pwa/icons/) als auch flach im Hauptordner.
 param([string]$Build = (Get-Date -Format 'yyyyMMddHHmmss'))
 $ErrorActionPreference = 'Stop'
-$root = Split-Path -Parent $PSScriptRoot
+
+$here = $PSScriptRoot
+$root = if (Test-Path (Join-Path $here 'kegelliste.html')) { $here } else { Split-Path -Parent $here }
 $out  = Join-Path $root 'site'
+
+function Find-File([string]$name, [string[]]$subdirs) {
+  foreach ($d in $subdirs + @('')) {
+    $p = if ($d) { Join-Path (Join-Path $root $d) $name } else { Join-Path $root $name }
+    if (Test-Path $p -PathType Leaf) { return $p }
+  }
+  throw "Datei fehlt im Repository: $name"
+}
 
 if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 New-Item -ItemType Directory -Force (Join-Path $out 'icons') | Out-Null
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
-$page = [IO.File]::ReadAllText((Join-Path $root 'kegelliste.html'), $utf8)
+$page = [IO.File]::ReadAllText((Find-File 'kegelliste.html' @()), $utf8)
 
 $head = @"
 <!doctype html>
@@ -31,10 +42,12 @@ $head = @"
 $html = $head + "`n" + $page + "`n</body>`n</html>`n"
 [IO.File]::WriteAllText((Join-Path $out 'index.html'), $html, $utf8)
 
-$sw = [IO.File]::ReadAllText((Join-Path $root 'pwa/sw.js'), $utf8).Replace('__BUILD__', $Build)
+$sw = [IO.File]::ReadAllText((Find-File 'sw.js' @('pwa')), $utf8).Replace('__BUILD__', $Build)
 [IO.File]::WriteAllText((Join-Path $out 'sw.js'), $sw, $utf8)
-Copy-Item (Join-Path $root 'pwa/manifest.webmanifest') $out
-Copy-Item (Join-Path $root 'pwa/icons/*') (Join-Path $out 'icons')
+Copy-Item (Find-File 'manifest.webmanifest' @('pwa')) $out
+foreach ($icon in 'apple-touch-icon.png','favicon-32.png','icon-192.png','icon-512.png','icon-maskable-512.png') {
+  Copy-Item (Find-File $icon @('pwa/icons','icons')) (Join-Path $out 'icons')
+}
 # Damit GitHub Pages die Dateien unverändert ausliefert
 [IO.File]::WriteAllText((Join-Path $out '.nojekyll'), '', $utf8)
 
