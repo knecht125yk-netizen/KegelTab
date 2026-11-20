@@ -233,6 +233,8 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:60;width:100%;heigh
 .empty{text-align:center;padding:36px 16px;display:flex;flex-direction:column;gap:12px;align-items:center}
 .empty svg{width:64px;height:64px}
 .hero-num{font-family:var(--f-display);font-weight:800;font-size:34px;line-height:1}
+.kpi-note{font-size:12.5px;color:var(--muted);margin-top:6px;font-weight:600}
+.kpi-note.warn{color:var(--warn)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -266,6 +268,7 @@ const fmtDate = iso => { if(!iso) return ''; const [y,m,d] = iso.split('-'); ret
 const fmtShort = iso => { const [y,m,d] = iso.split('-'); return d+'.'+m+'.'; };
 const weekday = iso => new Date(iso+'T12:00:00').toLocaleDateString('de-DE',{weekday:'long'});
 const eur = c => (c/100).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const addDays = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); };
 const daysSince = iso => Math.floor((Date.now() - new Date(iso+'T12:00:00').getTime())/86400000);
 const pick = a => a[Math.floor(Math.random()*a.length)];
 const slug = s => s.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'x';
@@ -412,21 +415,24 @@ function calc(g){
   });
   const sumPen = present.reduce((s,p) => s + rows[p.id].pen, 0);
   const avg = present.length ? Math.round(sumPen / present.length) : 0;
-  let total = 0, paid = 0, open = 0;
-  const overdue = g.status === 'closed' && daysSince(g.date) > R.overdueDays;
+  let total = 0, paid = 0, open = 0, fees = 0;
+  // Payment deadline: after overdueDays days the fee is added to everyone who has not fully paid yet
+  // (independent of whether the evening was "ended" in the app).
+  const overdue = daysSince(g.date) > R.overdueDays;
   g.roster.forEach(r => {
     const o = rows[r.id];
     o.start = (r.att === 'present' || (R.startgeldForAbsent && r.att !== 'out')) ? R.startgeld : 0;
     o.absence = r.att === 'excused' ? avg : r.att === 'absent' ? R.absentFee + avg : 0;
     o.total = o.start + o.pen + o.absence;
     o.paid = (g.paid && g.paid[r.id]) || 0;
+    // A stored fee is frozen at the moment the person settled in full (0 = paid in time).
     const storedFee = g.fees && g.fees[r.id];
     o.fee = storedFee != null ? storedFee : (overdue && o.paid < o.total ? R.overdueFee : 0);
     o.open = Math.max(0, o.total + o.fee - o.paid);
     o.overdue = o.fee > 0 && o.open > 0;
-    total += o.total + o.fee; paid += o.paid; open += o.open;
+    total += o.total + o.fee; paid += o.paid; open += o.open; fees += o.fee;
   });
-  return {rows, avg, sumPen, present:present.length, total, paid, open};
+  return {rows, avg, sumPen, present:present.length, total, paid, open, fees, dueDate: addDays(g.date, R.overdueDays), overdue};
 }
 const ATT_ORDER = {present:0, excused:1, absent:2};
 const rosterOrdered = g => g.roster.slice().sort((a,b) => (ATT_ORDER[a.att] - ATT_ORDER[b.att]) || a.name.localeCompare(b.name,'de'));
@@ -704,17 +710,19 @@ function viewSummary(g){
   const lm = listMaker(g, c);
   let h = '<div class="gamebar"><div class="d"><span class="eyebrow">Abgeschlossen · ' + weekday(g.date) + (g.example ? ' · Beispiel' : '') + '</span><b>' + fmtDate(g.date) + '</b></div>' +
     '<div class="row"><button class="btn" data-act="exportXlsx" data-gid="' + g.id + '">Excel</button><button class="btn" data-act="exportPdf" data-gid="' + g.id + '">PDF</button></div></div>';
-  h += '<div class="kpis"><div class="card"><div class="eyebrow">Kasse gesamt</div><div class="hero-num num">' + eur(c.total) + '</div></div>' +
-    '<div class="card"><div class="eyebrow">Noch offen</div><div class="hero-num num" style="color:' + (c.open ? 'var(--accent)' : 'var(--good)') + '">' + eur(c.open) + '</div></div>' +
+  const feeNote = c.fees ? '<div class="kpi-note warn">inkl. ' + eur(c.fees) + ' Mahngebühren</div>' : '';
+  const dueNote = c.open ? (c.overdue ? '<div class="kpi-note warn">Frist abgelaufen am ' + fmtDate(c.dueDate) + ' · +' + eur(g.rules.overdueFee) + ' pro Person</div>' : '<div class="kpi-note">zahlbar bis ' + fmtDate(c.dueDate) + ', danach +' + eur(g.rules.overdueFee) + '</div>') : '';
+  h += '<div class="kpis"><div class="card"><div class="eyebrow">Kasse gesamt</div><div class="hero-num num">' + eur(c.total) + '</div>' + feeNote + '</div>' +
+    '<div class="card"><div class="eyebrow">Noch offen</div><div class="hero-num num" style="color:' + (c.open ? 'var(--accent)' : 'var(--good)') + '">' + eur(c.open) + '</div>' + dueNote + '</div>' +
     '<div class="card"><div class="eyebrow">Ø Strafen (ohne Startgeld)</div><div class="hero-num num">' + eur(c.avg) + '</div></div></div>';
   if(aw.length) h += '<div class="awards">' + aw.map(a => '<div class="award"><span class="e">' + a.e + '</span><span class="t"><small>' + a.title + '</small><b>' + esc(a.name) + '</b><span>' + esc(a.sub) + '</span></span></div>').join('') + '</div>';
   const groupHead = {present:'Anwesend', excused:'Entschuldigt (zahlen Ø)', absent:'Unentschuldigt (zahlen ' + eur(g.rules.absentFee) + ' + Ø)'};
   let lastAtt = null;
-  h += '<div class="tbl-wrap"><table><thead><tr><th>Name</th><th class="r">Startgeld</th><th class="r">Strafen</th><th class="r">Gesamt</th><th class="r">Offen</th><th>Bezahlt</th></tr></thead><tbody>' +
+  h += '<div class="tbl-wrap"><table><thead><tr><th>Name</th><th class="r">Startgeld</th><th class="r">Strafen</th><th class="r">Mahngebühr</th><th class="r">Gesamt</th><th class="r">Offen</th><th>Bezahlt</th></tr></thead><tbody>' +
     rows.map(r => { const o = c.rows[r.id];
       let sep = '';
-      if(r.att !== lastAtt){ lastAtt = r.att; sep = '<tr class="grp"><td colspan="6">' + groupHead[r.att] + '</td></tr>'; }
-      return sep + '<tr><td><button class="btn ghost" style="min-height:36px;padding:0 6px;border:0" data-act="player" data-pid="' + r.id + '">' + esc(r.name) + '</button></td><td class="r num">' + eur(o.start) + '</td><td class="r num">' + eur(o.pen + o.absence) + (r.att !== 'present' ? ' <small class="muted">(' + (r.att === 'excused' ? 'Ø' : '5 € + Ø') + ')</small>' : '') + '</td><td class="r num"><b>' + eur(o.total + o.fee) + '</b>' + (o.fee ? ' <span class="pill warn">+Mahnung</span>' : '') + '</td><td class="r num">' + (o.open ? '<span class="pill bad">' + eur(o.open) + '</span>' : '<span class="pill good">0,00 €</span>') + '</td><td><button class="toggle" data-act="togglePaid" data-gid="' + g.id + '" data-pid="' + r.id + '" aria-pressed="' + (o.open === 0) + '">' + (o.open === 0 ? '✓ bezahlt' : 'offen') + '</button></td></tr>'; }).join('') +
+      if(r.att !== lastAtt){ lastAtt = r.att; sep = '<tr class="grp"><td colspan="7">' + groupHead[r.att] + '</td></tr>'; }
+      return sep + '<tr><td><button class="btn ghost" style="min-height:36px;padding:0 6px;border:0" data-act="player" data-pid="' + r.id + '">' + esc(r.name) + '</button></td><td class="r num">' + eur(o.start) + '</td><td class="r num">' + eur(o.pen + o.absence) + (r.att !== 'present' ? ' <small class="muted">(' + (r.att === 'excused' ? 'Ø' : '5 € + Ø') + ')</small>' : '') + '</td><td class="r num">' + (o.fee ? '<span class="pill warn">+' + eur(o.fee) + '</span>' : '<span class="muted">–</span>') + '</td><td class="r num"><b>' + eur(o.total + o.fee) + '</b></td><td class="r num">' + (o.open ? '<span class="pill bad">' + eur(o.open) + '</span>' : '<span class="pill good">0,00 €</span>') + '</td><td><button class="toggle" data-act="togglePaid" data-gid="' + g.id + '" data-pid="' + r.id + '" aria-pressed="' + (o.open === 0) + '">' + (o.open === 0 ? '✓ bezahlt' : 'offen') + '</button></td></tr>'; }).join('') +
     '</tbody></table></div>';
   const cands = g.roster.filter(r => r.att === 'present');
   h += '<div class="card spread"><div><div class="eyebrow">Vorletzte macht die Liste</div>' +
@@ -734,18 +742,18 @@ function viewKasse(){
   const games = gamesSorted();
   if(!games.length) return '<div class="empty card">' + pinSvg() + '<h2>Die Kasse ist noch leer</h2><p class="muted">Sobald der erste Abend läuft, siehst du hier, wer noch etwas schuldet.</p><button class="btn primary" data-act="tab" data-tab="abend">Ersten Abend starten</button></div>';
   const per = {};
-  let openAll = 0, paidAll = 0;
-  games.forEach(g => { const c = calc(g); paidAll += c.paid; g.roster.forEach(r => { const o = c.rows[r.id]; if(!per[r.id]) per[r.id] = {id:r.id, name:r.name, open:0, overdue:false, n:0}; per[r.id].open += o.open; if(o.overdue) per[r.id].overdue = true; if(o.open) per[r.id].n++; }); openAll += c.open; });
+  let openAll = 0, paidAll = 0, openFees = 0;
+  games.forEach(g => { const c = calc(g); paidAll += c.paid; g.roster.forEach(r => { const o = c.rows[r.id]; if(!per[r.id]) per[r.id] = {id:r.id, name:r.name, open:0, fees:0, overdue:false, n:0}; per[r.id].open += o.open; if(o.overdue){ per[r.id].overdue = true; per[r.id].fees += o.fee; openFees += o.fee; } if(o.open) per[r.id].n++; }); openAll += c.open; });
   const debtors = Object.values(per).filter(p => p.open > 0).sort((a,b) => b.open - a.open);
-  let h = '<div class="kpis"><div class="card"><div class="eyebrow">Noch offen</div><div class="hero-num num" style="color:' + (openAll ? 'var(--accent)' : 'var(--good)') + '">' + eur(openAll) + '</div></div>' +
+  let h = '<div class="kpis"><div class="card"><div class="eyebrow">Noch offen</div><div class="hero-num num" style="color:' + (openAll ? 'var(--accent)' : 'var(--good)') + '">' + eur(openAll) + '</div>' + (openFees ? '<div class="kpi-note warn">inkl. ' + eur(openFees) + ' Mahngebühren</div>' : '') + '</div>' +
     '<div class="card"><div class="eyebrow">Eingezahlt gesamt</div><div class="hero-num num">' + eur(paidAll) + '</div></div>' +
     '<div class="card"><div class="eyebrow">Abende</div><div class="hero-num num">' + games.length + '</div></div></div>';
   if(games.some(g => g.example)) h += exampleBanner();
   h += '<section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Wer schuldet noch?</h2><span class="muted" style="font-size:13px">Frist ' + S.config.rules.overdueDays + ' Tage, sonst ' + eur(S.config.rules.overdueFee) + '</span></div>';
-  h += debtors.length ? '<div class="list">' + debtors.map(d => '<button class="li" data-act="debtor" data-pid="' + d.id + '"><span class="grow"><b>' + esc(d.name) + '</b><small>' + d.n + ' Abend' + (d.n > 1 ? 'e' : '') + ' offen</small></span>' + (d.overdue ? '<span class="pill warn">überfällig</span>' : '') + '<span class="pill bad num">' + eur(d.open) + '</span></button>').join('') + '</div>'
+  h += debtors.length ? '<div class="list">' + debtors.map(d => '<button class="li" data-act="debtor" data-pid="' + d.id + '"><span class="grow"><b>' + esc(d.name) + '</b><small>' + d.n + ' Abend' + (d.n > 1 ? 'e' : '') + ' offen' + (d.fees ? ' · inkl. ' + eur(d.fees) + ' Mahngebühr' : '') + '</small></span>' + (d.overdue ? '<span class="pill warn">überfällig +' + eur(d.fees) + '</span>' : '') + '<span class="pill bad num">' + eur(d.open) + '</span></button>').join('') + '</div>'
     : '<div class="card"><b>Alles bezahlt.</b> <span class="muted">Die Kasse ist sauber.</span></div>';
   h += '</section><section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Alle Abende</h2><button class="btn" data-act="exportXlsxAll">Alles als Excel</button></div><div class="list">' +
-    games.map(g => { const c = calc(g); return '<button class="li" data-act="openGame" data-gid="' + g.id + '"><span class="grow"><b>' + fmtDate(g.date) + (g.status === 'open' ? ' <span class="pill good">läuft</span>' : '') + (g.example ? ' <span class="pill">Beispiel</span>' : '') + '</b><small>' + c.present + ' anwesend · Ø ' + eur(c.avg) + '</small></span><span class="num" style="text-align:right"><b>' + eur(c.total) + '</b><br><small class="muted">' + (c.open ? 'offen ' + eur(c.open) : 'alles bezahlt') + '</small></span></button>'; }).join('') + '</div></section>';
+    games.map(g => { const c = calc(g); return '<button class="li" data-act="openGame" data-gid="' + g.id + '"><span class="grow"><b>' + fmtDate(g.date) + (g.status === 'open' ? ' <span class="pill good">läuft</span>' : '') + (g.example ? ' <span class="pill">Beispiel</span>' : '') + '</b><small>' + c.present + ' anwesend · Ø ' + eur(c.avg) + '</small></span><span class="num" style="text-align:right"><b>' + eur(c.total) + '</b><br><small class="muted">' + (c.open ? 'offen ' + eur(c.open) : 'alles bezahlt') + '</small>' + (c.fees ? '<br><small style="color:var(--warn);font-weight:600">inkl. ' + eur(c.fees) + ' Mahngebühren</small>' : '') + '</span></button>'; }).join('') + '</div></section>';
   return h;
 }
 function exampleBanner(){ return '<div class="banner"><span>Enthält Beispielabende zum Ausprobieren.</span>' + delBtn('delExamples','all','Beispiele löschen') + '</div>'; }
@@ -891,7 +899,7 @@ function sheetPlayer(){
     h += '<p class="muted" style="margin:0">' + (r.att === 'excused' ? 'Zahlt den Durchschnitt des Abends (' + eur(c.avg) + ').' : 'Zahlt ' + eur(g.rules.absentFee) + ' plus den Durchschnitt des Abends (' + eur(c.avg) + ').') + '</p>';
   }
   h += '<div class="card" style="display:flex;flex-direction:column;gap:6px;background:var(--surface-2)">' +
-    line('Startgeld', o.start) + (o.pen ? line('Strafen (inkl. von anderen)', o.pen) : '') + (o.absence ? line('Abwesenheit', o.absence) : '') + (o.fee ? line('Mahngebühr', o.fee) : '') + line('Bezahlt', -o.paid) +
+    line('Startgeld', o.start) + (o.pen ? line('Strafen (inkl. von anderen)', o.pen) : '') + (o.absence ? line('Abwesenheit', o.absence) : '') + (o.fee ? line('⚠️ Mahngebühr (nicht bis ' + fmtDate(c.dueDate) + ' bezahlt)', o.fee) : (o.open && !c.overdue ? '<div class="spread"><span class="muted" style="font-size:12.5px">zahlbar bis ' + fmtDate(c.dueDate) + ', danach +' + eur(g.rules.overdueFee) + '</span></div>' : '')) + line('Bezahlt', -o.paid) +
     '<div class="spread"><b>Noch offen</b><b class="num" style="color:' + (o.open ? 'var(--accent)' : 'var(--good)') + '">' + eur(o.open) + '</b></div></div>';
   h += '<div class="row"><button class="btn ' + (o.open ? 'good' : '') + '" data-act="togglePaid" data-gid="' + g.id + '" data-pid="' + r.id + '"' + (ro ? ' disabled' : '') + '>' + (o.open ? 'Alles bezahlt' : 'Zahlung zurücksetzen') + '</button><span class="stepper"><button data-act="paidStep" data-d="-50" aria-label="50 Cent weniger bezahlt"' + (ro ? ' disabled' : '') + '>−</button><span>' + eur(o.paid) + '</span><button data-act="paidStep" data-d="50" aria-label="50 Cent mehr bezahlt"' + (ro ? ' disabled' : '') + '>+</button></span></div>';
   return h;
@@ -911,18 +919,28 @@ function sheetDebtor(){
   const name = items[0].c.rows[pid].name;
   const sum = items.reduce((s,x) => s + x.c.rows[pid].open, 0);
   return '<div class="spread"><h2>' + esc(name) + '</h2><span class="lane-total num">' + eur(sum) + '</span></div><div class="list">' +
-    items.map(x => { const o = x.c.rows[pid]; return '<div class="li"><span class="grow"><b>' + fmtDate(x.g.date) + '</b><small>gesamt ' + eur(o.total + o.fee) + (o.overdue ? ' · inkl. Mahngebühr' : '') + '</small></span><span class="pill bad num">' + eur(o.open) + '</span><button class="btn good" data-act="togglePaid" data-gid="' + x.g.id + '" data-pid="' + pid + '">Bezahlt</button></div>'; }).join('') +
+    items.map(x => { const o = x.c.rows[pid]; return '<div class="li"><span class="grow"><b>' + fmtDate(x.g.date) + '</b><small>gesamt ' + eur(o.total + o.fee) + (o.fee ? ' · <b style="color:var(--warn)">inkl. ' + eur(o.fee) + ' Mahngebühr</b>' : ' · zahlbar bis ' + fmtDate(x.c.dueDate)) + '</small></span><span class="pill bad num">' + eur(o.open) + '</span><button class="btn good" data-act="togglePaid" data-gid="' + x.g.id + '" data-pid="' + pid + '">Bezahlt</button></div>'; }).join('') +
     '</div><button class="btn primary big" data-act="payAll" data-pid="' + pid + '">Alles begleichen (' + eur(sum) + ')</button>';
 }
 
 /* ---------- actions ---------- */
 const EMOJIS = ['🕳️','🎳','🥚','🐌','🔔','😩','⏰','🍺','💸','🎯','🔥','🐢','🙈','🍻','💥','🎲','🐷','⭐'];
-function setPaid(g, pid, full){
-  const c = calc(g), o = c.rows[pid];
+/* Records a payment. The late fee is frozen once the person has paid the full base amount:
+   paid in time → fee 0 for good; paid after the deadline → the 2 € stay due until paid as well. */
+function setPayment(g, pid, cents){
+  const o = calc(g).rows[pid];
   g.paid = g.paid || {}; g.fees = g.fees || {};
-  if(full){ g.fees[pid] = o.fee; g.paid[pid] = o.total + o.fee; }
-  else { delete g.paid[pid]; delete g.fees[pid]; }
+  cents = Math.max(0, Math.round(cents));
+  if(cents <= 0){ delete g.paid[pid]; delete g.fees[pid]; }
+  else {
+    g.paid[pid] = cents;
+    if(cents >= o.total) g.fees[pid] = o.fee; else delete g.fees[pid];
+  }
   touch(g);
+}
+function setPaid(g, pid, full){
+  const o = calc(g).rows[pid];
+  setPayment(g, pid, full ? o.total + o.fee : 0);
 }
 function act(a, el){
   const d = el.dataset;
@@ -967,7 +985,7 @@ function act(a, el){
     case 'closeSheet': if(el.classList.contains('scrim') && el !== evTarget) return; S.sheet = null; break;
     case 'setAtt': { const gg = S.games[S.sheet.gid]; const r = gg.roster.find(x => x.id === S.sheet.pid); r.att = d.v; touch(gg); break; }
     case 'adj': { const gg = S.games[S.sheet.gid]; addPen(gg, S.sheet.pid, d.pen, +d.d, false); break; }
-    case 'paidStep': { const gg = S.games[S.sheet.gid]; gg.paid = gg.paid || {}; gg.paid[S.sheet.pid] = Math.max(0, (gg.paid[S.sheet.pid] || 0) + (+d.d)); touch(gg); break; }
+    case 'paidStep': { const gg = S.games[S.sheet.gid]; setPayment(gg, S.sheet.pid, ((gg.paid && gg.paid[S.sheet.pid]) || 0) + (+d.d)); break; }
     case 'togglePaid': { const gg = S.games[d.gid]; const o = calc(gg).rows[d.pid]; setPaid(gg, d.pid, o.open > 0); if(o.open > 0){ sfx('kaching'); buzz(15); toast(pick(['Kasse sagt danke!','Bezahlt. Schulden ade!','Klingeling, bezahlt.'])); } break; }
     case 'payAll': { gamesSorted().forEach(gg => { const o = calc(gg).rows[d.pid]; if(o && o.open > 0) setPaid(gg, d.pid, true); }); confetti(50); sfx('kaching'); toast('Alles beglichen. Respekt!'); S.sheet = null; break; }
     case 'rosterCycle': {
@@ -1175,7 +1193,7 @@ async function exportXlsx(games){
   const used = {};
   games.forEach(g => {
     const t = tableFor(g);
-    const aoa = [['Kegelclub ' + S.config.club + ' – Kegelliste ' + fmtDate(g.date)], []].concat([t.head]).concat(t.rows).concat([[], ['Durchschnitt Ø (ohne Startgeld)', '', t.c.avg/100], ['Kasse gesamt', '', t.c.total/100], ['Noch offen', '', t.c.open/100], ['Zahlungsfrist', '', g.rules.overdueDays + ' Tage, sonst ' + eur(g.rules.overdueFee)]]);
+    const aoa = [['Kegelclub ' + S.config.club + ' – Kegelliste ' + fmtDate(g.date)], []].concat([t.head]).concat(t.rows).concat([[], ['Durchschnitt Ø (ohne Startgeld)', '', t.c.avg/100], ['Kasse gesamt', '', t.c.total/100], ['davon Mahngebühren', '', t.c.fees/100], ['Noch offen', '', t.c.open/100], ['Zahlbar bis', '', fmtDate(t.c.dueDate)], ['Zahlungsfrist', '', g.rules.overdueDays + ' Tage, sonst ' + eur(g.rules.overdueFee)]]);
     const lm = listMaker(g, t.c); if(lm) aoa.push(['Nächste Liste macht', '', lm.r.name]);
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     fmtMoney(ws, aoa, 2, money, t.head);
@@ -1213,7 +1231,7 @@ async function exportPdf(games){
     doc.setFontSize(12); doc.setFont('helvetica','normal'); doc.setTextColor(90,99,119);
     doc.text('Kegelliste vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')', 14, 23);
     doc.setTextColor(...red); doc.setFont('helvetica','bold');
-    doc.text('Kasse: ' + eur(t.c.total) + '   ·   Ø ohne Startgeld: ' + eur(t.c.avg) + '   ·   offen: ' + eur(t.c.open), 283, 23, {align:'right'});
+    doc.text('Kasse: ' + eur(t.c.total) + (t.c.fees ? ' (inkl. ' + eur(t.c.fees) + ' Mahngebühren)' : '') + '   ·   Ø ohne Startgeld: ' + eur(t.c.avg) + '   ·   offen: ' + eur(t.c.open), 283, 23, {align:'right'});
     const nPen = g.penalties.length;
     doc.autoTable({
       startY: 28,
@@ -1247,7 +1265,14 @@ function setupPwa(){
   navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) return; reloading = true; savePrefsNow(); location.reload(); });
   navigator.serviceWorker.register('sw.js').then(reg => {
     swReg = reg;
-    const mark = w => { if(w && navigator.serviceWorker.controller){ S.updateReady = true; render(); } };
+    // New version downloaded: install it right away unless an evening is running or something is being edited;
+    // otherwise show a button so nothing jumps around during the game.
+    const mark = w => {
+      if(!w || !navigator.serviceWorker.controller) return;
+      const g = openGame();
+      if(!g && !S.sheet && !isTyping()){ savePrefsNow(); w.postMessage('skipWaiting'); return; }
+      S.updateReady = true; render();
+    };
     if(reg.waiting) mark(reg.waiting);
     reg.addEventListener('updatefound', () => { const w = reg.installing; w && w.addEventListener('statechange', () => { if(w.state === 'installed') mark(w); }); });
     setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
