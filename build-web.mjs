@@ -1,11 +1,11 @@
-// Baut den App-Inhalt (Ordner www/) aus kegelliste.html.
+// Baut den App-Inhalt (Ordner www/) aus kegeltab.html.
 // Die Bibliotheken für Excel und PDF werden mit in die App gepackt, damit der Export auch ohne Internet geht.
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, rmSync } from 'node:fs';
 
 rmSync('www', { recursive: true, force: true });
 mkdirSync('www/lib', { recursive: true });
 
-const page = readFileSync('kegelliste.html', 'utf8');
+const page = readFileSync('kegeltab.html', 'utf8');
 const html = `<!doctype html>
 <html lang="de">
 <head>
