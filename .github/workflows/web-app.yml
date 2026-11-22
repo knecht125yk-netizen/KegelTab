@@ -34,4 +34,4 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
       - name: Adresse anzeigen
-        run: echo "Die Kegelliste ist online unter ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "KegelTab ist online unter ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
