@@ -1,6 +1,6 @@
-# Kegelliste aufs Handy – kostenlos
+# KegelTab aufs Handy – kostenlos
 
-Die Kegelliste wird als **installierbare Web-App** veröffentlicht. Sie kommt aufs **iPhone, iPad und Android**, ohne App Store und **ohne Kosten**:
+KegelTab (die Kegel-App der Umwerfenden) wird als **installierbare Web-App** veröffentlicht. Sie kommt aufs **iPhone, iPad und Android**, ohne App Store und **ohne Kosten**:
 
 - Sie bekommt ein eigenes Symbol auf dem Home-Bildschirm und öffnet sich im Vollbild wie eine normale App.
 - Sie läuft **auch ohne Internet**, auf der Kegelbahn inklusive Excel- und PDF-Export.
@@ -15,7 +15,7 @@ Die Kegelliste wird als **installierbare Web-App** veröffentlicht. Sie kommt au
 
 1. **GitHub-Konto anlegen:** https://github.com → *Sign up* (kostenlos).
 2. **Repository anlegen:** oben rechts **+ → New repository**
-   - Name: `kegelliste`
+   - Name: `KegelTab`
    - **Public** auswählen. GitHub Pages ist im kostenlosen Konto nur für öffentliche Repositories verfügbar.
      Öffentlich ist dabei **nur das Programm** (inkl. Vorlage mit Vornamen und Strafen). **Eure Abende, Strafen und Beträge kommen nie ins Internet**, sie liegen nur auf euren Geräten.
    - **Create repository**
@@ -25,7 +25,7 @@ Die Kegelliste wird als **installierbare Web-App** veröffentlicht. Sie kommt au
 4. **Pages einschalten:** im Repository **Settings → Pages** → bei *Source* **„GitHub Actions“** auswählen.
 5. **Veröffentlichen:** **Actions** → links **„Web-App veröffentlichen (iPhone + Android, kostenlos)“** → **Run workflow**.
    Nach 1–2 Minuten ist der Lauf grün. In der Zusammenfassung steht die Adresse, etwa
-   **`https://DEIN-NAME.github.io/kegelliste/`**
+   **`https://DEIN-NAME.github.io/KegelTab/`**
 
 ## Schritt 2 · Auf dem Handy installieren
 
@@ -44,7 +44,7 @@ Danach immer über das **Kegel-Symbol auf dem Home-Bildschirm** öffnen.
 
 ## Updates einspielen
 
-1. Neue `kegelliste.html` bei GitHub hochladen: im Repository **Add file → Upload files** → Datei hineinziehen → **Commit changes**.
+1. Neue `kegeltab.html` bei GitHub hochladen: im Repository **Add file → Upload files** → Datei hineinziehen → **Commit changes**.
 2. Die Veröffentlichung startet von selbst und dauert 1–2 Minuten.
 3. Beim nächsten Öffnen erscheint in der App **„Eine neue Version ist da – Jetzt aktualisieren“**. Antippen, fertig. **Die Daten bleiben erhalten.**
 
@@ -67,5 +67,5 @@ Nur nötig, wenn du statt der Web-App eine „richtige“ Android-App-Datei möc
 
 ## Optional: iPhone/iPad über TestFlight (kostet 99 €/Jahr)
 
-Nur falls ihr später doch eine echte iOS-App wollt. Nötig sind ein Apple-Entwicklerkonto (https://developer.apple.com/programs/), eine App in App Store Connect mit der Bundle-ID `de.umwerfenden.kegelliste` und ein API-Schlüssel (Rolle *Admin*).
+Nur falls ihr später doch eine echte iOS-App wollt. Nötig sind ein Apple-Entwicklerkonto (https://developer.apple.com/programs/), eine App in App Store Connect mit der Bundle-ID `de.umwerfenden.kegeltab` und ein API-Schlüssel (Rolle *Admin*).
 Dann bei GitHub die Secrets `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` anlegen und **Actions → „Optional · iPad/iPhone zu TestFlight“** starten.
