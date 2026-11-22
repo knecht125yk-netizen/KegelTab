@@ -18,7 +18,7 @@ jobs:
           PW=$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24)
           keytool -genkeypair -keystore release.keystore -alias kegelliste -keyalg RSA -keysize 2048 \
             -validity 10000 -storepass "$PW" -keypass "$PW" \
-            -dname "CN=Kegelliste, O=Die Umwerfenden, C=DE"
+            -dname "CN=KegelTab, O=Die Umwerfenden, C=DE"
           base64 -w0 release.keystore > ANDROID_KEYSTORE_BASE64.txt
           printf '%s' "$PW" > ANDROID_KEYSTORE_PASSWORD.txt
       - uses: actions/upload-artifact@v4
