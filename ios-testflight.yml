@@ -9,7 +9,7 @@ jobs:
   testflight:
     runs-on: macos-15
     env:
-      BUNDLE_ID: de.umwerfenden.kegelliste
+      BUNDLE_ID: de.umwerfenden.kegeltab
       TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
@@ -42,7 +42,7 @@ jobs:
           npx capacitor-assets generate --ios --splashBackgroundColor '#eceff5' --splashBackgroundColorDark '#0d111b'
           npx cap sync ios
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Kegelliste" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string Kegelliste" ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName KegelTab" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string KegelTab" ios/App/App/Info.plist
 
       - name: App-Store-Connect-Schlüssel ablegen
         env:
