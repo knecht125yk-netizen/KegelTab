@@ -1,6 +1,6 @@
-// Offline-Speicher der Kegelliste. __BUILD__ wird beim Bauen durch eine neue Nummer ersetzt,
+// Offline-Speicher von KegelTab. __BUILD__ wird beim Bauen durch eine neue Nummer ersetzt,
 // dadurch merkt das Handy, dass es ein Update gibt.
-const VERSION = 'kegelliste-__BUILD__';
+const VERSION = 'kegeltab-__BUILD__';
 const CORE = [
   './',
   './index.html',
@@ -31,7 +31,7 @@ self.addEventListener('message', event => {
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k.startsWith('kegelliste-') && k !== VERSION).map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => (k.startsWith('kegeltab-') || k.startsWith('kegelliste-')) && k !== VERSION).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
