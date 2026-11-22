@@ -61,17 +61,17 @@ jobs:
             -Pandroid.injected.signing.store.password="$PW" \
             -Pandroid.injected.signing.key.alias=kegelliste \
             -Pandroid.injected.signing.key.password="$PW"
-          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/Kegelliste-1.0.${{ github.run_number }}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/KegelTab-1.0.${{ github.run_number }}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Kegelliste-Android-1.0.${{ github.run_number }}
-          path: Kegelliste-1.0.${{ github.run_number }}.apk
+          name: KegelTab-Android-1.0.${{ github.run_number }}
+          path: KegelTab-1.0.${{ github.run_number }}.apk
 
       - name: Als Download (Release) bereitstellen
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-1.0.${{ github.run_number }}
-          name: Kegelliste Android 1.0.${{ github.run_number }}
+          name: KegelTab Android 1.0.${{ github.run_number }}
           body: APK auf dem Android-Gerät herunterladen und öffnen. Ein Update wird einfach über die alte Version installiert – die Daten bleiben erhalten.
-          files: Kegelliste-1.0.${{ github.run_number }}.apk
+          files: KegelTab-1.0.${{ github.run_number }}.apk
