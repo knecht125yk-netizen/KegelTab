@@ -400,7 +400,7 @@ function subscribe(){
 }
 
 /* ---------- money logic ---------- */
-function calc(g){
+function calc(g, exact){
   const pens = g.penalties, R = g.rules;
   const present = g.roster.filter(r => r.att === 'present');
   const rows = {};
@@ -415,8 +415,9 @@ function calc(g){
     });
   });
   const sumPen = present.reduce((s,p) => s + rows[p.id].pen, 0);
-  // Ø rounded to the first decimal (10 cents) for evenings started with avgStep = 10; older evenings keep exact cents
-  const step = R.avgStep || 1;
+  // Ø always rounded to the first decimal (10 cents) – the same value everywhere: app, Kasse, Statistik, Excel, PDF.
+  // (exact = old unrounded value, only used once to carry over payments of older evenings, see migrateGames)
+  const step = exact ? 1 : 10;
   const avg = present.length ? Math.round(sumPen / present.length / step) * step : 0;
   let total = 0, paid = 0, open = 0, fees = 0;
   // Payment deadline: after overdueDays days the fee is added to everyone who has not fully paid yet
@@ -436,6 +437,22 @@ function calc(g){
     total += o.total + o.fee; paid += o.paid; open += o.open; fees += o.fee;
   });
   return {rows, avg, sumPen, present:present.length, total, paid, open, fees, dueDate: addDays(g.date, R.overdueDays), overdue};
+}
+/* One-time update of evenings from before the Ø rounding: whoever had paid in full stays "bezahlt"
+   (the paid amount follows the new, rounded total). Marked with rules.avgStep = 10 so it runs only once per evening. */
+function migrateGames(){
+  if(S.readOnly) return;
+  Object.values(S.games).forEach(g => {
+    if(!g.rules || g.rules.avgStep != null) return;
+    const before = calc(g, true), after = calc(g);
+    g.paid = g.paid || {};
+    Object.keys(before.rows).forEach(id => {
+      const b = before.rows[id], a = after.rows[id];
+      if(b.paid > 0 && b.open === 0) g.paid[id] = a.total + a.fee;
+    });
+    g.rules.avgStep = 10;
+    touch(g);
+  });
 }
 const ATT_ORDER = {present:0, excused:1, absent:2};
 const rosterOrdered = g => g.roster.slice().sort((a,b) => (ATT_ORDER[a.att] - ATT_ORDER[b.att]) || a.name.localeCompare(b.name,'de'));
@@ -595,6 +612,7 @@ function render(){
   const cfg = S.config;
   // one-time update of older saved settings: Ø rounded to 10 cents (applies to the running and all new evenings)
   if(cfg && cfg.rules && cfg.rules.avgStep == null && !S.readOnly){ cfg.rules.avgStep = 10; persist('config'); syncOpenGames(); }
+  migrateGames();
   $('#clubName').textContent = 'KegelTab';
   $('#subline').textContent = cfg ? cfg.club + ' · ' + weekday(todayISO()).slice(0,2) + ', ' + fmtDate(todayISO()) : 'wird geladen…';
   $('#sync').innerHTML = S.mode === 'db' ? '<i' + (S.loadNote ? ' class="off"' : '') + '></i>' + (S.readOnly ? 'nur lesen' : 'geteilt') : S.mode === 'native' ? '<i></i>auf diesem Gerät' : '<i class="off"></i>nur dieses Gerät';
@@ -796,7 +814,7 @@ function viewStats(){
     });
   });
   const list = Object.values(P).filter(p => p.ev > 0);
-  list.forEach(p => p.avg = Math.round(p.pen / p.ev));
+  list.forEach(p => p.avg = Math.round(p.pen / p.ev / 10) * 10);
   const metric = S.statMetric;
   const val = p => metric === 'avg' ? p.avg : p.pen;
   const sorted = list.slice().sort((a,b) => val(b) - val(a));
