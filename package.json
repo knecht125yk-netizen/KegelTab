@@ -1,8 +1,8 @@
 {
-  "name": "kegelliste",
+  "name": "kegeltab",
   "version": "1.0.0",
   "private": true,
-  "description": "Kegelliste der Umwerfenden – App für iPad, iPhone und Android",
+  "description": "KegelTab – Kegel-App der Umwerfenden – App für iPad, iPhone und Android",
   "type": "module",
   "scripts": {
     "build": "node scripts/build-web.mjs"
