@@ -1,4 +1,4 @@
-<title>Kegelliste Die Umwerfenden</title>
+<title>KegelTab · Die Umwerfenden</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#d93a2b">
@@ -243,7 +243,7 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:60;width:100%;heigh
 <div class="app" id="app">
   <header class="top"><div class="in gut">
     <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path fill="var(--lane)" d="M20 3c3 0 4.2 2.6 3.6 6-.4 2.2-1.9 3.6-1.9 5.4 0 2 3.9 5.3 3.9 11.6C25.6 33 23 37 20 37s-5.6-4-5.6-11c0-6.3 3.9-9.6 3.9-11.6 0-1.8-1.5-3.2-1.9-5.4C15.8 5.6 17 3 20 3z"/><path fill="var(--accent)" d="M16.7 15.3h6.6v1.9h-6.6zM16.4 18.4h7.2v1.6h-7.2z"/></svg>
-    <div class="brand"><b id="clubName">Kegelliste</b><small id="subline">Kegelclub</small></div>
+    <div class="brand"><b id="clubName">KegelTab</b><small id="subline">Kegelclub</small></div>
     <div class="sync" id="sync"></div>
     <button class="icon-btn" id="soundBtn" data-act="sound" aria-label="Sound an/aus" title="Sound an/aus">🔇</button>
   </div></header>
@@ -591,21 +591,21 @@ function render(){
   if(isTyping()){ S.renderPending = true; return; }
   S.renderPending = false;
   const cfg = S.config;
-  $('#clubName').textContent = cfg ? 'Kegelclub ' + cfg.club : 'Kegelliste';
-  $('#subline').textContent = cfg ? weekday(todayISO()) + ', ' + fmtDate(todayISO()) : 'wird geladen…';
+  $('#clubName').textContent = 'KegelTab';
+  $('#subline').textContent = cfg ? cfg.club + ' · ' + weekday(todayISO()).slice(0,2) + ', ' + fmtDate(todayISO()) : 'wird geladen…';
   $('#sync').innerHTML = S.mode === 'db' ? '<i' + (S.loadNote ? ' class="off"' : '') + '></i>' + (S.readOnly ? 'nur lesen' : 'geteilt') : S.mode === 'native' ? '<i></i>auf diesem Gerät' : '<i class="off"></i>nur dieses Gerät';
   $('#soundBtn').textContent = S.sound ? '🔊' : '🔇';
   const tabs = [['abend','Abend'],['kasse','Kasse'],['stats','Statistik'],['admin','Verwaltung']];
   $('#nav').innerHTML = tabs.map(([k,l]) => '<button data-act="tab" data-tab="' + k + '"' + (S.tab === k ? ' aria-current="page"' : '') + '>' + IC[k] + l + '</button>').join('');
   let html = '';
   if(S.loadNote) html += '<div class="banner">' + esc(S.loadNote) + '</div>';
-  if(S.updateReady) html += '<div class="banner"><span>Eine neue Version der Kegelliste ist da.</span><button class="btn primary" data-act="applyUpdate">Jetzt aktualisieren</button></div>';
+  if(S.updateReady) html += '<div class="banner"><span>Eine neue Version von KegelTab ist da.</span><button class="btn primary" data-act="applyUpdate">Jetzt aktualisieren</button></div>';
   if(PWA && !STANDALONE && !S.hintDismissed && S.tab === 'abend'){
     if(IOS) html += '<div class="banner"><span>Als App installieren: unten in Safari auf <b>Teilen</b> (Quadrat mit Pfeil) tippen, dann <b>„Zum Home-Bildschirm“</b>.</span><button class="btn" data-act="dismissHint">OK</button></div>';
-    else if(S.installEvt) html += '<div class="banner"><span>Die Kegelliste lässt sich als App installieren.</span><span class="row"><button class="btn" data-act="dismissHint">Später</button><button class="btn primary" data-act="install">Installieren</button></span></div>';
+    else if(S.installEvt) html += '<div class="banner"><span>KegelTab lässt sich als App installieren.</span><span class="row"><button class="btn" data-act="dismissHint">Später</button><button class="btn primary" data-act="install">Installieren</button></span></div>';
   }
   if(!cfg){
-    html += S.loading ? '<div class="empty"><p class="muted">Kegelliste wird geladen…</p></div>' : viewNoConfig();
+    html += S.loading ? '<div class="empty"><p class="muted">KegelTab wird geladen…</p></div>' : viewNoConfig();
     $('#view').innerHTML = html; $('#dock').hidden = true; renderSheet(); return;
   }
   if(S.tab === 'abend') html += viewAbend();
@@ -617,7 +617,7 @@ function render(){
   renderSheet();
 }
 function viewNoConfig(){
-  return '<div class="empty card">' + pinSvg() + '<h2>Noch keine Kegelliste angelegt</h2><p class="muted">Lade die Vorlage mit den 19 Mitgliedern und den Strafen aus eurer Papierliste. Alles lässt sich danach unter „Verwaltung“ ändern.</p><button class="btn primary big" data-act="loadTemplate">Vorlage „Die Umwerfenden“ laden</button></div>';
+  return '<div class="empty card">' + pinSvg() + '<h2>Noch kein Kegelclub angelegt</h2><p class="muted">Lade die Vorlage mit den 19 Mitgliedern und den Strafen aus eurer Papierliste. Alles lässt sich danach unter „Verwaltung“ ändern.</p><button class="btn primary big" data-act="loadTemplate">Vorlage „Die Umwerfenden“ laden</button></div>';
 }
 function pinSvg(){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><path fill="var(--lane)" d="M20 3c3 0 4.2 2.6 3.6 6-.4 2.2-1.9 3.6-1.9 5.4 0 2 3.9 5.3 3.9 11.6C25.6 33 23 37 20 37s-5.6-4-5.6-11c0-6.3 3.9-9.6 3.9-11.6 0-1.8-1.5-3.2-1.9-5.4C15.8 5.6 17 3 20 3z"/><path fill="var(--accent)" d="M16.7 15.3h6.6v1.9h-6.6zM16.4 18.4h7.2v1.6h-7.2z"/></svg>'; }
 
@@ -1023,8 +1023,8 @@ function act(a, el){
     case 'dismissHint': S.hintDismissed = true; lsSet('kl.hint', true); break;
     case 'install': { const ev = S.installEvt; S.installEvt = null; if(ev){ ev.prompt(); ev.userChoice.then(c => { if(c.outcome !== 'accepted'){ S.hintDismissed = true; render(); } }).catch(() => {}); } break; }
     case 'backup': {
-      const data = JSON.stringify({app:'kegelliste', version:1, exportedAt:todayISO(), config:S.config, games:S.games}, null, 1);
-      saveFile('Kegelliste_Sicherung_' + todayISO() + '.json', new Blob([data], {type:'application/json'}));
+      const data = JSON.stringify({app:'kegeltab', version:1, exportedAt:todayISO(), config:S.config, games:S.games}, null, 1);
+      saveFile('KegelTab_Sicherung_' + todayISO() + '.json', new Blob([data], {type:'application/json'}));
       return;
     }
     case 'cancelImport': S.pendingImport = null; break;
@@ -1112,7 +1112,7 @@ document.addEventListener('change', e => {
     const f = el.files[0]; el.value = '';
     f.text().then(txt => {
       let d = null; try{ d = JSON.parse(txt); }catch(err){}
-      if(!d || d.app !== 'kegelliste' || !d.config || !Array.isArray(d.config.players) || typeof d.games !== 'object'){ toast('Diese Datei ist keine Kegelliste-Sicherung.'); return; }
+      if(!d || !['kegeltab','kegelliste'].includes(d.app) || !d.config || !Array.isArray(d.config.players) || typeof d.games !== 'object'){ toast('Diese Datei ist keine Sicherung von KegelTab.'); return; }
       S.pendingImport = {date:d.exportedAt || todayISO(), config:d.config, games:d.games || {}}; render();
     });
     return;
@@ -1146,7 +1146,7 @@ async function saveFile(filename, blob){
   if(NATIVE && plug('Filesystem') && plug('Share')){
     try{
       const w = await plug('Filesystem').writeFile({path:filename, data:await blobToB64(blob), directory:'CACHE'});
-      await plug('Share').share({title:filename, url:w.uri, dialogTitle:'Kegelliste speichern oder teilen'});
+      await plug('Share').share({title:filename, url:w.uri, dialogTitle:'KegelTab – speichern oder teilen'});
     }catch(e){ if(!/cancel/i.test(String(e && (e.message || e)))) toast('Teilen nicht möglich: ' + (e && e.message || 'Fehler')); }
     return;
   }
@@ -1182,7 +1182,7 @@ async function exportXlsx(games){
   toast('Excel wird erstellt…');
   try{ await loadLib('xlsx'); }catch(e){ toast('Excel-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
   const out = XLSX.write(buildXlsx(games), {bookType:'xlsx', type:'array'});
-  const fn = 'Kegelliste_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.xlsx';
+  const fn = 'KegelTab_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.xlsx';
   saveFile(fn, new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
 }
 /* Excel layout: one sheet per evening (title, header row with filter, rows grouped anwesend → entschuldigt →
@@ -1217,7 +1217,7 @@ function buildXlsx(games){
   games.forEach(g => {
     const c = calc(g), pens = g.penalties, nPen = pens.length;
     const head = ['Name', 'Status', 'Startgeld'].concat(pens.map(p => p.name + ' (' + eur(p.cents) + ')' + (p.mode === 'others' ? ' *' : ''))).concat(['Strafen', 'Abwesenheit', 'Mahngebühr', 'Gesamt', 'Bezahlt', 'Offen']);
-    const aoa = [['Kegelclub ' + S.config.club + ' – Kegelliste vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')'], [], head];
+    const aoa = [['Kegelclub ' + S.config.club + ' – Kegelabend vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')'], [], head];
     const sum = {start:0, pen:0, abs:0, fee:0, tot:0, paid:0, open:0, cnt:pens.map(() => 0)};
     rosterOrdered(g).forEach(r => {
       const o = c.rows[r.id];
@@ -1255,7 +1255,7 @@ async function exportPdf(games){
   toast('PDF wird erstellt…');
   try{ await loadLib('pdf'); }catch(e){ toast('PDF-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
   const doc = buildPdf(games);
-  const fn = 'Kegelliste_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.pdf';
+  const fn = 'KegelTab_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.pdf';
   saveFile(fn, doc.output('blob'));
 }
 /* PDF layout: A4 landscape, one evening per page. Fixed widths for name, status and money columns
@@ -1276,7 +1276,7 @@ function buildPdf(games){
     doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(...ink);
     doc.text('Kegelclub ' + S.config.club, M, 15);
     doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...muted);
-    doc.text('Kegelliste vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')  ·  ' + c.present + ' anwesend', M, 21.5);
+    doc.text('Kegelabend vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')  ·  ' + c.present + ' anwesend', M, 21.5);
     doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...ink);
     doc.text('Kasse ' + money(c.total), PW - M, 15, {align:'right'});
     doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...(c.open ? red : muted));
@@ -1369,7 +1369,7 @@ let swReg = null;
 function setupPwa(){
   try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); S.installEvt = e; render(); });
-  window.addEventListener('appinstalled', () => { S.installEvt = null; S.hintDismissed = true; render(); toast('Installiert! Die Kegelliste ist jetzt auf dem Home-Bildschirm.'); });
+  window.addEventListener('appinstalled', () => { S.installEvt = null; S.hintDismissed = true; render(); toast('Installiert! KegelTab ist jetzt auf dem Home-Bildschirm.'); });
   if(!('serviceWorker' in navigator)) return;
   let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading) return; reloading = true; savePrefsNow(); location.reload(); });
