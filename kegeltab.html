@@ -635,17 +635,13 @@ function viewStart(){
   const label = {present:'Anwesend', excused:'Entschuldigt', absent:'Unentschuldigt', out:'Nicht auf der Liste'};
   const act = cfg.players.filter(p => p.active);
   const n = act.filter(p => (d.att[p.id] || 'present') === 'present').length;
-  const last = gamesSorted().find(g => g.status === 'closed');
   let h = '<section class="card" style="display:flex;flex-direction:column;gap:14px">' +
     '<div class="spread"><div><div class="eyebrow">Neuer Kegelabend</div><h2>Wer ist heute da?</h2></div>' +
     '<label class="row"><span class="muted">Datum</span><input type="date" id="draftDate" value="' + d.date + '" data-chg="draftDate"></label></div>' +
     '<p class="muted" style="margin:0">Tippe auf einen Namen, um zwischen <b>anwesend</b>, <b>entschuldigt</b>, <b>unentschuldigt</b> und <b>nicht auf der Liste</b> zu wechseln.</p>' +
     '<div class="att">' + act.map(p => { const a = d.att[p.id] || 'present'; return '<button class="' + a + '" data-act="draftAtt" data-pid="' + p.id + '"><b>' + esc(p.name) + '</b><span>' + label[a] + '</span></button>'; }).join('') + '</div>' +
     '<div class="spread"><button class="btn ghost" data-act="draftAll">Alle anwesend</button><button class="btn primary big" data-act="startGame">Gut Holz! Abend starten (' + n + ')</button></div></section>';
-  if(last){
-    const c = calc(last);
-    h += '<section class="card spread"><div><div class="eyebrow">Letzter Abend</div><b style="font-size:17px">' + fmtDate(last.date) + '</b> <span class="muted">· ' + c.present + ' Anwesende · ' + eur(c.total) + '</span></div><button class="btn" data-act="openGame" data-gid="' + last.id + '">Ansehen</button></section>';
-  }
+  h += allGamesSection();
   return h;
 }
 function leaders(g, c){
@@ -735,6 +731,7 @@ function viewSummary(g){
     '</div><select id="listMaker" data-chg="listMaker" data-gid="' + g.id + '" aria-label="Listenführer ändern"><option value="">automatisch</option>' + cands.map(p => '<option value="' + p.id + '"' + (g.listMaker === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</select></div>';
   h += '<div class="spread"><div class="row"><button class="btn" data-act="reopen" data-gid="' + g.id + '">Wieder öffnen</button>' + delBtn('delGame', g.id, 'Abend löschen') + '</div>' +
     '<div class="row">' + (S.viewGameId ? '<button class="btn" data-act="backToCurrent">Zurück</button>' : '') + (openGame() ? '' : '<button class="btn primary" data-act="newGame">Neuer Abend</button>') + '</div></div>';
+  h += allGamesSection();
   return h;
 }
 function delBtn(act, id, label){
@@ -757,9 +754,15 @@ function viewKasse(){
   h += '<section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Wer schuldet noch?</h2><span class="muted" style="font-size:13px">Frist ' + S.config.rules.overdueDays + ' Tage, sonst ' + eur(S.config.rules.overdueFee) + '</span></div>';
   h += debtors.length ? '<div class="list">' + debtors.map(d => '<button class="li" data-act="debtor" data-pid="' + d.id + '"><span class="grow"><b>' + esc(d.name) + '</b><small>' + d.n + ' Abend' + (d.n > 1 ? 'e' : '') + ' offen' + (d.fees ? ' · inkl. ' + eur(d.fees) + ' Mahngebühr' : '') + '</small></span>' + (d.overdue ? '<span class="pill warn">überfällig +' + eur(d.fees) + '</span>' : '') + '<span class="pill bad num">' + eur(d.open) + '</span></button>').join('') + '</div>'
     : '<div class="card"><b>Alles bezahlt.</b> <span class="muted">Die Kasse ist sauber.</span></div>';
-  h += '</section><section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Alle Abende</h2><button class="btn" data-act="exportXlsxAll">Alles als Excel</button></div><div class="list">' +
-    games.map(g => { const c = calc(g); return '<button class="li" data-act="openGame" data-gid="' + g.id + '"><span class="grow"><b>' + fmtDate(g.date) + (g.status === 'open' ? ' <span class="pill good">läuft</span>' : '') + (g.example ? ' <span class="pill">Beispiel</span>' : '') + '</b><small>' + c.present + ' anwesend · Ø ' + eur(c.avg) + '</small></span><span class="num" style="text-align:right"><b>' + eur(c.total) + '</b><br><small class="muted">' + (c.open ? 'offen ' + eur(c.open) : 'alles bezahlt') + '</small>' + (c.fees ? '<br><small style="color:var(--warn);font-weight:600">inkl. ' + eur(c.fees) + ' Mahngebühren</small>' : '') + '</span></button>'; }).join('') + '</div></section>';
+  h += '</section>' + allGamesSection(games);
   return h;
+}
+/* List of all evenings (used on the Kasse tab and on the Abend tab). */
+function allGamesSection(games){
+  games = games || gamesSorted();
+  if(!games.length) return '';
+  return '<section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Alle Abende</h2><div class="row"><button class="btn" data-act="exportXlsxAll">Alles als Excel</button><button class="btn" data-act="exportPdfAll">Alles als PDF</button></div></div><div class="list">' +
+    games.map(g => { const c = calc(g); return '<button class="li" data-act="openGame" data-gid="' + g.id + '"><span class="grow"><b>' + fmtDate(g.date) + (g.status === 'open' ? ' <span class="pill good">läuft</span>' : '') + (g.example ? ' <span class="pill">Beispiel</span>' : '') + '</b><small>' + c.present + ' anwesend · Ø ' + eur(c.avg) + '</small></span><span class="num" style="text-align:right"><b>' + eur(c.total) + '</b><br><small class="muted">' + (c.open ? 'offen ' + eur(c.open) : 'alles bezahlt') + '</small>' + (c.fees ? '<br><small style="color:var(--warn);font-weight:600">inkl. ' + eur(c.fees) + ' Mahngebühren</small>' : '') + '</span></button>'; }).join('') + '</div></section>';
 }
 function exampleBanner(){ return '<div class="banner"><span>Enthält Beispielabende zum Ausprobieren.</span>' + delBtn('delExamples','all','Beispiele löschen') + '</div>'; }
 
@@ -855,7 +858,10 @@ function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(Math.max(ra
 function stepper(act, id, cents, step){ return '<span class="stepper"><button data-act="' + act + '" data-id="' + id + '" data-d="' + (-step) + '" aria-label="weniger">−</button><span>' + eur(cents) + '</span><button data-act="' + act + '" data-id="' + id + '" data-d="' + step + '" aria-label="mehr">+</button></span>'; }
 function viewAdmin(){
   const cfg = S.config, R = cfg.rules;
-  let h = '<section style="display:flex;flex-direction:column;gap:10px"><h2>Mitspieler</h2><div class="list">' +
+  let h = '<section style="display:flex;flex-direction:column;gap:10px"><h2>Kegelclub</h2><div class="list">' +
+    '<div class="adm"><span style="flex:0 0 auto">Name des Clubs</span><input type="text" id="clubInput" value="' + esc(cfg.club) + '" data-chg="club" aria-label="Name des Kegelclubs" placeholder="z. B. Die Umwerfenden"></div>' +
+    '</div><span class="muted" style="font-size:13px">Erscheint oben in der App sowie auf Excel und PDF.</span></section>';
+  h += '<section style="display:flex;flex-direction:column;gap:10px"><h2>Mitspieler</h2><div class="list">' +
     cfg.players.map(p => '<div class="adm"><input type="text" id="pn-' + p.id + '" value="' + esc(p.name) + '" data-chg="pname" data-id="' + p.id + '" aria-label="Name"><button class="toggle" data-act="pactive" data-id="' + p.id + '" aria-pressed="' + p.active + '">' + (p.active ? 'aktiv' : 'pausiert') + '</button>' + delBtn('pdel', p.id, 'Entfernen') + '</div>').join('') +
     '<div class="adm"><input type="text" id="newPlayer" placeholder="Neuer Name, z. B. Maria" aria-label="Neuer Mitspieler"><button class="btn primary" data-act="addPlayer">Hinzufügen</button></div></div></section>';
   h += '<section style="display:flex;flex-direction:column;gap:10px"><div class="spread"><h2>Strafen</h2><span class="muted" style="font-size:13px">Änderungen gelten für den laufenden und alle neuen Abende</span></div><div class="list">' +
@@ -867,7 +873,6 @@ function viewAdmin(){
     '<div class="adm"><span style="flex:1">Fehlen ohne Abmeldung (zusätzlich zu Ø)</span>' + stepper('rule', 'absentFee', R.absentFee, 50) + '</div>' +
     '<div class="adm"><span style="flex:1">Zahlungsfrist</span><span class="stepper"><button data-act="days" data-d="-7">−</button><span>' + R.overdueDays + ' Tage</span><button data-act="days" data-d="7">+</button></span></div>' +
     '<div class="adm"><span style="flex:1">Mahngebühr nach Frist</span>' + stepper('rule', 'overdueFee', R.overdueFee, 50) + '</div>' +
-    '<div class="adm"><span style="flex:1">Name des Clubs</span><input type="text" id="clubInput" value="' + esc(cfg.club) + '" data-chg="club" aria-label="Clubname"></div>' +
     '</div></section>';
   h += '<section style="display:flex;flex-direction:column;gap:10px"><h2>Daten</h2><div class="card" style="display:flex;flex-direction:column;gap:12px">' +
     '<p class="muted" style="margin:0">' + (S.mode === 'db' ? 'Die Daten werden geteilt gespeichert: Alle, mit denen du diese Seite teilst und die bearbeiten dürfen, sehen dieselbe Liste.' : 'Die Daten liegen auf diesem Gerät. Mit einer Sicherung kannst du sie auf ein anderes Gerät übertragen.') + '</p>' +
@@ -1098,6 +1103,7 @@ document.addEventListener('keydown', e => {
   if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); }
   if(e.key === 'Enter' && e.target.id === 'newPlayer') act('addPlayer', e.target);
   if(e.key === 'Enter' && e.target.id === 'newPen') act('addPen', e.target);
+  if(e.key === 'Enter' && e.target.dataset && e.target.dataset.chg && e.target.type === 'text') e.target.blur();
 });
 document.addEventListener('pointerdown', e => {
   lpFired = false; clearTimeout(lpTimer);
@@ -1122,7 +1128,7 @@ document.addEventListener('change', e => {
   else if(k === 'listMaker'){ const g = S.games[el.dataset.gid]; g.listMaker = el.value || null; touch(g); }
   else if(k === 'pname'){ const p = S.config.players.find(x => x.id === el.dataset.id); const v = el.value.trim(); if(v){ p.name = v; persist('config'); const og = openGame(); if(og){ const r = og.roster.find(x => x.id === p.id); if(r){ r.name = v; touch(og); } } } }
   else if(k === 'penname'){ const p = S.config.penalties.find(x => x.id === el.dataset.id); const v = el.value.trim(); if(v){ p.name = v; persist('config'); syncOpenGames(); } }
-  else if(k === 'club'){ const v = el.value.trim(); if(v){ S.config.club = v; persist('config'); } }
+  else if(k === 'club'){ const v = el.value.trim(); if(v && v !== S.config.club){ S.config.club = v; persist('config'); toast('Clubname gespeichert: ' + v); } }
   render();
 });
 document.addEventListener('focusout', () => setTimeout(() => { if(S.renderPending && !isTyping()) render(); }, 0));
@@ -1130,8 +1136,8 @@ document.addEventListener('visibilitychange', () => { if(document.visibilityStat
 
 /* ---------- export ---------- */
 const LIBS = {
-  xlsx:['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'],
-  pdf:['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js']
+  xlsx:['https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'],
+  pdf:['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js']
 };
 const loaded = {};
 function loadScript(src){ return loaded[src] || (loaded[src] = new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => { s.remove(); delete loaded[src]; rej(new Error('load')); }; document.head.appendChild(s); })); }
@@ -1170,198 +1176,346 @@ async function saveFile(filename, blob){
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   toast('Gespeichert: ' + filename);
 }
-function tableFor(g){
-  const c = calc(g);
-  const att = {present:'anwesend', excused:'entschuldigt', absent:'unentschuldigt'};
-  const head = ['Name','Status','Startgeld'].concat(g.penalties.map(p => p.name + ' (' + eur(p.cents) + (p.mode === 'others' ? ', alle anderen' : '') + ')')).concat(['Strafen €','Abwesenheit €','Mahnung €','Gesamt €','Bezahlt €','Offen €']);
-  const rows = rosterOrdered(g).map(r => { const o = c.rows[r.id]; return [r.name, att[r.att], o.start/100].concat(g.penalties.map(p => o.cnt[p.id] || '')).concat([o.pen/100, o.absence/100, o.fee/100, (o.total + o.fee)/100, o.paid/100, o.open/100]); });
-  return {c, head, rows};
+/* ===== Excel + PDF in the layout of the paper list (Vorlage "Kegelliste", DIN A4 quer) =====
+   Both exports share one layout: Datum / Kegelclub on top, slanted column heads (45°) with the price in red,
+   Name + Startgeld, Anwesend, zu spät, nicht erscheinen (mit/ohne Abmeldung), the penalties, Gesamt,
+   one big Ø cell, Bezahlt, noch offen (Frist) and the box on the right (Kasse vergessen, vorletzte macht Liste, Name).
+   Widths are given in "template units" (pixels of the scanned paper list) and scaled to the page. */
+const priceTxt = c => (c % 100 === 0 ? String(c / 100) : (c / 100).toFixed(2).replace('.', ',')) + '€';
+const moneyTxt = c => (c / 100).toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+const fileStem = games => 'KegelTab_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date);
+function fristTxt(R){ return 'Frist: ' + (R.overdueDays % 7 === 0 ? (R.overdueDays / 7) + ' Wochen' : R.overdueDays + ' Tage') + ' sonst ' + priceTxt(R.overdueFee); }
+/* Column list for one evening. parts = label pieces: [text, style] with style '' (normal), 'r' (red price), 's' (small note). */
+function sheetLayout(g){
+  const R = g.rules, pens = g.penalties;
+  const WID = {spaet:42, gosse:74, neun:99, klingeln:43, verlierer:58, krug:45, null:51, liegen:54};
+  const ORDER = ['gosse','neun','klingeln','verlierer','krug','null','liegen'];
+  const penCol = p => ({k:'pen', p, w: WID[p.id] || 52, parts: [[p.name + ' ', ''], [(p.id === 'verlierer' ? 'jeder ' : '') + priceTxt(p.cents) + ' ', 'r']].concat(p.mode === 'others' ? [['(für alle außer Werfer)', 's']] : [])});
+  const cols = [{k:'name', w:84}, {k:'start', w:98}, {k:'att', w:40, parts:[['Anwesend', '']]}];
+  const spaet = pens.find(p => p.id === 'spaet');
+  if(spaet) cols.push(penCol(spaet));
+  cols.push({k:'exc', w:41, parts:[['nicht erscheinen ', ''], ['(mit Abmeldung) ', 's'], ['Ø', 'r']]});
+  cols.push({k:'abs', w:40, thick:true, parts:[['nicht erscheinen ', ''], ['(ohne Abmeldung) ', 's'], [priceTxt(R.absentFee) + ' + Ø', 'r']]});
+  ORDER.forEach(id => { const p = pens.find(x => x.id === id); if(p) cols.push(penCol(p)); });
+  pens.filter(p => !ORDER.includes(p.id) && p.id !== 'spaet' && p.id !== 'kasse').forEach(p => cols.push(penCol(p)));
+  cols.push({k:'total', w:73, thick:true, parts:[['Gesamt:', '']]});
+  cols.push({k:'avg', w:55, thick:true, parts:[['Durchschnitt ', ''], ['Ø ', ''], ['(ohne Startgeld)', 's']]});
+  cols.push({k:'paid', w:54, parts:[['Bezahlt', '']]});
+  cols.push({k:'open', w:54, thick:true, parts:[['noch offen ', ''], [fristTxt(R), 'r']]});
+  // total width of the paper list: 1259 units; the box on the right gets the rest (at least 170)
+  const TOTAL = 1259, MINBOX = 170;
+  const fixed = cols[0].w + cols[1].w, diag = cols.slice(2).reduce((s, c) => s + c.w, 0);
+  if(fixed + diag > TOTAL - MINBOX){ const f = (TOTAL - MINBOX - fixed) / diag; cols.slice(2).forEach(c => c.w *= f); }
+  let x = 0; cols.forEach(c => { c.x = x; x += c.w; });
+  const box = {x, w: TOTAL - x};
+  const kasse = pens.find(p => p.id === 'kasse');
+  const roster = g.roster.slice().sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  return {cols, box, kasse, roster, TOTAL};
 }
-async function exportXlsx(games){
-  games = games.filter(Boolean); if(!games.length){ toast('Keine Abende zum Exportieren.'); return; }
-  toast('Excel wird erstellt…');
-  try{ await loadLib('xlsx'); }catch(e){ toast('Excel-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
-  const out = XLSX.write(buildXlsx(games), {bookType:'xlsx', type:'array'});
-  const fn = 'KegelTab_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.xlsx';
-  saveFile(fn, new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+function forgotKasse(g, c, lay){
+  if(!lay.kasse) return '';
+  return lay.roster.filter(r => (c.rows[r.id].cnt.kasse || 0) > 0).map(r => r.name + (c.rows[r.id].cnt.kasse > 1 ? ' (' + c.rows[r.id].cnt.kasse + '×)' : '')).join(', ');
 }
-/* Excel layout: one sheet per evening (title, header row with filter, rows grouped anwesend → entschuldigt →
-   unentschuldigt, sum row, summary block) plus an overview sheet when several evenings are exported.
-   Amounts are real numbers in € format, so Excel can keep calculating with them. */
-const XL_MONEY = '#,##0.00 "€";-#,##0.00 "€";"–"';
-function buildXlsx(games){
-  const wb = XLSX.utils.book_new();
-  const fmt = (ws, r, c, z) => { const cell = ws[XLSX.utils.encode_cell({r, c})]; if(cell && typeof cell.v === 'number') cell.z = z; };
-  const attTxt = {present:'anwesend', excused:'entschuldigt', absent:'unentschuldigt'};
-  if(games.length > 1){
-    const players = {}; games.forEach(g => g.roster.forEach(r => players[r.id] = r.name));
-    const ids = Object.keys(players).sort((a,b) => players[a].localeCompare(players[b],'de'));
-    const cs = games.map(calc);
-    const aoa = [['Kegelclub ' + S.config.club + ' – Übersicht ' + fmtDate(games[0].date) + ' bis ' + fmtDate(games[games.length-1].date)], [],
-      ['Name'].concat(games.map(g => fmtDate(g.date))).concat(['Summe', 'davon bezahlt', 'Noch offen'])];
-    const colSum = games.map(() => 0); let tSum = 0, tPaid = 0, tOpen = 0;
-    ids.forEach(id => {
-      let sum = 0, paid = 0, op = 0; const row = [players[id]];
-      cs.forEach((c, k) => { const o = c.rows[id]; if(o){ row.push((o.total + o.fee)/100); sum += o.total + o.fee; paid += o.paid; op += o.open; colSum[k] += o.total + o.fee; } else row.push(''); });
-      row.push(sum/100, paid/100, op/100); tSum += sum; tPaid += paid; tOpen += op; aoa.push(row);
-    });
-    aoa.push(['Summe'].concat(colSum.map(v => v/100)).concat([tSum/100, tPaid/100, tOpen/100]));
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    for(let r = 3; r < aoa.length; r++) for(let c = 1; c < aoa[2].length; c++) fmt(ws, r, c, XL_MONEY);
-    ws['!cols'] = [{wch:16}].concat(games.map(() => ({wch:12}))).concat([{wch:12},{wch:13},{wch:12}]);
-    ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:Math.min(aoa[2].length - 1, 6)}}];
-    ws['!autofilter'] = {ref: XLSX.utils.encode_range({s:{r:2,c:0}, e:{r:aoa.length - 2, c:aoa[2].length - 1}})};
-    XLSX.utils.book_append_sheet(wb, ws, 'Übersicht');
-  }
-  const usedNames = {};
-  games.forEach(g => {
-    const c = calc(g), pens = g.penalties, nPen = pens.length;
-    const head = ['Name', 'Status', 'Startgeld'].concat(pens.map(p => p.name + ' (' + eur(p.cents) + ')' + (p.mode === 'others' ? ' *' : ''))).concat(['Strafen', 'Abwesenheit', 'Mahngebühr', 'Gesamt', 'Bezahlt', 'Offen']);
-    const aoa = [['Kegelclub ' + S.config.club + ' – Kegelabend vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')'], [], head];
-    const sum = {start:0, pen:0, abs:0, fee:0, tot:0, paid:0, open:0, cnt:pens.map(() => 0)};
-    rosterOrdered(g).forEach(r => {
-      const o = c.rows[r.id];
-      pens.forEach((p, i) => sum.cnt[i] += o.cnt[p.id] || 0);
-      sum.start += o.start; sum.pen += o.pen; sum.abs += o.absence; sum.fee += o.fee; sum.tot += o.total + o.fee; sum.paid += o.paid; sum.open += o.open;
-      aoa.push([r.name, attTxt[r.att], o.start/100].concat(pens.map(p => o.cnt[p.id] || '')).concat([o.pen/100, o.absence/100, o.fee/100, (o.total + o.fee)/100, o.paid/100, o.open/100]));
-    });
-    const lastData = aoa.length - 1;
-    aoa.push(['Summe', '', sum.start/100].concat(sum.cnt.map(n => n || '')).concat([sum.pen/100, sum.abs/100, sum.fee/100, sum.tot/100, sum.paid/100, sum.open/100]));
-    const sumRow = aoa.length - 1;
-    const lm = listMaker(g, c);
-    const info = [[], ['Kasse gesamt', '', c.total/100], ['davon Mahngebühren', '', c.fees/100], ['Noch offen', '', c.open/100], ['Ø Strafen (ohne Startgeld)', '', c.avg/100],
-      ['Zahlbar bis', '', fmtDate(c.dueDate) + ', danach +' + eur(g.rules.overdueFee) + ' Mahngebühr'], ['Nächste Liste schreibt', '', lm ? lm.r.name : '–'], [],
-      ['* zahlen alle Anwesenden außer dem Werfer. Strafen-Spalten zeigen die Anzahl.'], ['Fehlen mit Abmeldung: Ø des Abends. Ohne Abmeldung: ' + eur(g.rules.absentFee) + ' + Ø.']];
-    const infoStart = aoa.length;
-    info.forEach(r => aoa.push(r));
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    const iStr = 3 + nPen;
-    for(let r = 3; r <= sumRow; r++){ fmt(ws, r, 2, XL_MONEY); for(let k = iStr; k < iStr + 6; k++) fmt(ws, r, k, XL_MONEY); }
-    for(let r = infoStart; r < aoa.length; r++) fmt(ws, r, 2, XL_MONEY);
-    ws['!cols'] = [{wch:18}, {wch:15}, {wch:11}]
-      .concat(pens.map(p => ({wch: Math.min(18, Math.max(9, Math.ceil((p.name.length + 10) * 0.75)))})))
-      .concat([{wch:11}, {wch:13}, {wch:13}, {wch:11}, {wch:11}, {wch:11}]);
-    const merges = [{s:{r:0,c:0}, e:{r:0,c:Math.min(head.length - 1, 8)}}];
-    for(let r = infoStart; r < aoa.length; r++) if(aoa[r].length === 3) merges.push({s:{r,c:0}, e:{r,c:1}});
-    ws['!merges'] = merges;
-    ws['!autofilter'] = {ref: XLSX.utils.encode_range({s:{r:2,c:0}, e:{r:lastData, c:head.length - 1}})};
-    let name = g.date; let i = 2; while(usedNames[name]) name = g.date + ' (' + (i++) + ')'; usedNames[name] = 1;
-    XLSX.utils.book_append_sheet(wb, ws, name);
-  });
-  return wb;
+function summaryLines(g, c){
+  const sumTotal = Object.values(c.rows).reduce((s, o) => s + o.total, 0);
+  const L = [['Gesamt (inkl. Startgeld)', moneyTxt(sumTotal)], ['Bezahlt', moneyTxt(c.paid)], ['Noch offen', moneyTxt(c.open)]];
+  if(c.fees) L.push(['davon Mahngebühren', moneyTxt(c.fees)]);
+  L.push(['Anwesend', String(c.present)], ['Zahlbar bis', fmtDate(c.dueDate)]);
+  return L;
 }
+
+/* ---------- PDF ---------- */
 async function exportPdf(games){
   games = games.filter(Boolean); if(!games.length){ toast('Keine Abende zum Exportieren.'); return; }
   toast('PDF wird erstellt…');
   try{ await loadLib('pdf'); }catch(e){ toast('PDF-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
-  const doc = buildPdf(games);
-  const fn = 'KegelTab_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.pdf';
-  saveFile(fn, doc.output('blob'));
+  saveFile(fileStem(games) + '.pdf', buildPdf(games).output('blob'));
 }
-/* PDF layout: A4 landscape, one evening per page. Fixed widths for name, status and money columns
-   (never wrap), the penalty columns share the rest. Groups like in the app, a sum row and a summary box. */
 function buildPdf(games){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
-  const PW = 297, M = 12, W = PW - 2 * M;
-  const ink = [18,24,39], muted = [90,99,119], red = [217,58,43], wood = [185,120,63], woodSoft = [245,230,212], line = [217,222,232], warn = [168,99,0];
-  const money = c => (c/100).toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
-  const moneyOrDash = c => c ? money(c) : '–';
-  const attTxt = {present:'anwesend', excused:'entschuldigt', absent:'unentschuldigt'};
-  const groupTxt = g => ({present:'Anwesend', excused:'Entschuldigt (zahlen Ø)', absent:'Unentschuldigt (zahlen ' + money(g.rules.absentFee) + ' + Ø)'});
+  const ink = [0,0,0], red = [230,0,0], green = [29,138,87], grey = [120,120,120];
+  const PT = 0.3528; // mm per point
   games.forEach((g, gi) => {
     if(gi) doc.addPage();
-    const c = calc(g), pens = g.penalties, nPen = pens.length;
-    // header
-    doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(...ink);
-    doc.text('Kegelclub ' + S.config.club, M, 15);
-    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...muted);
-    doc.text('Kegelabend vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')  ·  ' + c.present + ' anwesend', M, 21.5);
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...ink);
-    doc.text('Kasse ' + money(c.total), PW - M, 15, {align:'right'});
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...(c.open ? red : muted));
-    doc.text('noch offen ' + money(c.open) + (c.fees ? '  (inkl. ' + money(c.fees) + ' Mahngebühren)' : ''), PW - M, 21.5, {align:'right'});
-    // columns: 0 Name, 1 Startgeld, pens..., then Strafen, Abwesenheit, Mahngebühr, Gesamt, Bezahlt, Offen
-    // (attendance is shown by the group rows, so no extra status column)
-    const fixed = {name:26, money:17, absence:17, fee:17};
-    const used = fixed.name + fixed.money * 5 + fixed.absence + fixed.fee; // Startgeld, Strafen, Gesamt, Bezahlt, Offen + Abwesenheit, Mahngebühr
-    const penW = Math.max(9, (W - used) / Math.max(1, nPen));
-    // penalty header: break only between words or after a hyphen, never inside a word
-    doc.setFont('helvetica','bold'); doc.setFontSize(6.8);
-    const wrapLabel = s => {
-      const parts = s.replace(/\s*\(.*\)\s*/, '').replace(/-/g, '- ').split(/\s+/).filter(Boolean);
-      const lines = []; let cur = '';
-      parts.forEach(p => { const sep = cur && !cur.endsWith('-') ? ' ' : ''; const next = cur + sep + p; if(cur && doc.getTextWidth(next) > penW - 1.8){ lines.push(cur); cur = p; } else cur = next; });
-      if(cur) lines.push(cur);
-      return lines.join('\n');
-    };
-    const head = [['Name', 'Start-\ngeld']
-      .concat(pens.map(p => wrapLabel(p.name) + '\n' + money(p.cents) + (p.mode === 'others' ? ' *' : '')))
-      .concat(['Strafen', 'Abwesen-\nheit', 'Mahn-\ngebühr', 'Gesamt', 'Bezahlt', 'Offen'])];
-    const iStr = 2 + nPen, iOpen = iStr + 5;
-    const body = [];
-    let lastAtt = null;
-    const sum = {start:0, pen:0, abs:0, fee:0, tot:0, paid:0, open:0, cnt:{}};
-    rosterOrdered(g).forEach(r => {
-      const o = c.rows[r.id];
-      if(r.att !== lastAtt){ lastAtt = r.att; body.push([{content: groupTxt(g)[r.att], colSpan: head[0].length, styles:{fillColor:woodSoft, fontStyle:'bold', textColor:ink, fontSize:7.5, cellPadding:{top:1.2, bottom:1.2, left:2}}}]); }
-      pens.forEach(p => sum.cnt[p.id] = (sum.cnt[p.id] || 0) + (o.cnt[p.id] || 0));
-      sum.start += o.start; sum.pen += o.pen; sum.abs += o.absence; sum.fee += o.fee; sum.tot += o.total + o.fee; sum.paid += o.paid; sum.open += o.open;
-      body.push([r.name, money(o.start)]
-        .concat(pens.map(p => o.cnt[p.id] ? String(o.cnt[p.id]) : ''))
-        .concat([moneyOrDash(o.pen), moneyOrDash(o.absence), o.fee ? '+' + money(o.fee) : '–', money(o.total + o.fee), moneyOrDash(o.paid), o.open ? money(o.open) : 'bezahlt']));
+    const c = calc(g), lay = sheetLayout(g), cols = lay.cols;
+    const s = 281 / lay.TOTAL;                       // mm per template unit (page width minus 8 mm margins)
+    const X = u => 8 + u * s;                        // x of a template position (0 = left edge of the table)
+    const n = Math.max(lay.roster.length, 1);
+    const rowU = Math.min(28.3, 538 / n);            // 19 rows fill the page like the paper list
+    const H = 252;                                   // header height in units (45° → same horizontal offset)
+    const yTop = 23, Y = u => yTop + u * s;          // u measured from the top edge of the table
+    const yHB = Y(H), yRow = i => Y(H + i * rowU), yB = yRow(n);
+    const thin = 0.2, thick = 0.6;
+    const line = (x1, y1, x2, y2, w) => { doc.setLineWidth(w || thin); doc.line(x1, y1, x2, y2); };
+    doc.setDrawColor(...ink); doc.setTextColor(...ink);
+    // --- Datum / Kegelclub
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text('Datum:', X(7), 16);
+    line(X(85), 17.2, X(182), 17.2);
+    doc.text(fmtDate(g.date), X(133), 16, {align:'center'});
+    doc.text('Kegelclub:', X(299), 16);
+    line(X(417), 17.2, X(715), 17.2);
+    doc.text(S.config.club || '', X(566), 16, {align:'center'});
+    doc.setFontSize(8); doc.setTextColor(...grey);
+    doc.text(weekday(g.date), X(133), 20, {align:'center'});
+    doc.setTextColor(...ink);
+    // --- grid
+    const boxX = lay.box.x, R = lay.TOTAL;
+    const avg = cols.find(cc => cc.k === 'avg');
+    line(X(0), Y(0), X(boxX + H), Y(0));                     // top edge
+    line(X(0), Y(0), X(0), yB);                              // left edge
+    line(X(cols[1].x), Y(0), X(cols[1].x), yB);              // Name | Startgeld
+    for(let i = 2; i < cols.length; i++){                    // slanted heads + verticals
+      const bx = cols[i].x;
+      line(X(bx), yHB, X(bx + H), Y(0));
+      line(X(bx), yHB, X(bx), yB, cols[i - 1].thick ? thick : thin);
+    }
+    line(X(boxX), yHB, X(boxX + H), Y(0));
+    line(X(boxX), yHB, X(boxX), yB, thick);                  // right edge of "noch offen"
+    line(X(0), yHB, X(boxX), yHB);                           // header bottom
+    for(let r = 1; r <= n; r++){                             // row lines (the Ø column is one big cell)
+      const yy = yRow(r);
+      if(r === n){ line(X(0), yy, X(R), yy, 0.3); continue; }
+      line(X(0), yy, X(avg.x), yy); line(X(avg.x + avg.w), yy, X(boxX), yy);
+    }
+    line(X(R), yHB, X(R), yB);                               // right edge of the box area
+    // box on the right: Kasse vergessen / vorletzte macht Liste / Name
+    const b0 = Math.min(4, Math.max(0, n - 3));
+    const by = k => yRow(b0) + k * rowU * s;
+    line(X(boxX), by(0), X(R), by(0), thick); line(X(boxX), by(1), X(R), by(1)); line(X(boxX), by(2), X(R), by(2)); line(X(boxX), by(3), X(R), by(3), thick);
+    // --- column heads
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.text('Name', X(4), yHB - 1.6);
+    doc.text('Startgeld', X(cols[1].x + 3), yHB - 1.6);
+    const maxLen = (H * s - 3.5) * Math.SQRT2;
+    const size = st => st === 's' ? 5.6 : 10;
+    const widthOf = (parts, k) => parts.reduce((sum, [t, st]) => { doc.setFontSize(size(st) * k); return sum + doc.getTextWidth(t); }, 0);
+    cols.slice(2).forEach(col => {
+      let k = 1; const L = widthOf(col.parts, 1); if(L > maxLen) k = maxLen / L;
+      const cap = 10 * k * PT * 0.72;
+      const cx = X(col.x + col.w / 2), pad = 1.5;
+      let px = cx + pad + cap * 0.354, py = yHB - pad + cap * 0.354;
+      col.parts.forEach(([t, st]) => {
+        doc.setFontSize(size(st) * k); doc.setTextColor(...(st === 'r' ? red : ink));
+        const tt = t.trimEnd();
+        doc.text(tt, px, py, {angle:45});
+        const d = (doc.getTextWidth(tt) + (tt.length < t.length ? doc.getTextWidth('n') * 0.9 : 0)) * Math.SQRT1_2; px += d; py -= d;
+      });
     });
-    const foot = [['Summe', money(sum.start)]
-      .concat(pens.map(p => sum.cnt[p.id] ? String(sum.cnt[p.id]) : ''))
-      .concat([money(sum.pen), money(sum.abs), sum.fee ? '+' + money(sum.fee) : '–', money(sum.tot), money(sum.paid), money(sum.open)])];
-    const colStyles = {0:{cellWidth:fixed.name, halign:'left', fontStyle:'bold'}, 1:{cellWidth:fixed.money, halign:'right'}};
-    pens.forEach((p, i) => colStyles[2 + i] = {cellWidth:penW, halign:'center'});
-    [fixed.money, fixed.absence, fixed.fee, fixed.money, fixed.money, fixed.money].forEach((w, k) => colStyles[iStr + k] = {cellWidth:w, halign:'right'});
-    doc.autoTable({
-      startY: 26, head, body, foot, theme:'grid', showFoot:'lastPage', showHead:'everyPage',
-      margin:{left:M, right:M, bottom:14}, tableWidth: W,
-      styles:{font:'helvetica', fontSize:8, cellPadding:{top:1.25, bottom:1.25, left:1.6, right:1.6}, valign:'middle', lineColor:line, lineWidth:0.2, textColor:ink, overflow:'ellipsize'},
-      headStyles:{fillColor:wood, textColor:255, fontSize:6.8, halign:'center', valign:'middle', overflow:'linebreak', cellPadding:{top:1.2, bottom:1.2, left:0.9, right:0.9}},
-      footStyles:{fillColor:[236,239,245], textColor:ink, fontStyle:'bold'},
-      columnStyles: colStyles,
-      didParseCell: d => {
-        const ci = d.column.index;
-        if(d.section === 'head'){ d.cell.styles.halign = ci === 0 ? 'left' : (ci >= 2 && ci < iStr) ? 'center' : 'right'; }
-        if(d.section === 'foot'){ d.cell.styles.halign = ci === 0 ? 'left' : (ci >= 2 && ci < iStr) ? 'center' : 'right'; }
-        if(d.section === 'body' && Array.isArray(d.row.raw) && d.row.raw.length > 1){
-          if(ci === iOpen){ const open = d.cell.raw !== 'bezahlt'; d.cell.styles.textColor = open ? red : [29,138,87]; d.cell.styles.fontStyle = 'bold'; }
-          if(ci === iStr + 2 && String(d.cell.raw).startsWith('+')){ d.cell.styles.textColor = warn; d.cell.styles.fontStyle = 'bold'; }
-          if(ci === iStr + 3){ d.cell.styles.fontStyle = 'bold'; }
-          if(d.cell.raw === '–'){ d.cell.styles.textColor = [170,176,190]; }
+    doc.setTextColor(...ink);
+    // --- rows
+    const rowMM = rowU * s;
+    const fs = Math.min(10.5, rowMM / PT * 0.62);
+    const base = i => yRow(i) + rowMM / 2 + fs * PT * 0.35;
+    const right = col => X(col.x + col.w) - 1.2, center = col => X(col.x + col.w / 2);
+    // money in narrow columns: shrink the font until "10,00 €" fits between the lines
+    const fit = (col, txt) => { const maxW = col.w * s - 2.2; const w = doc.getTextWidth(txt); if(w > maxW) doc.setFontSize(doc.getFontSize() * maxW / w); };
+    const money = (col, cents) => { const t = moneyTxt(cents); fit(col, t); doc.text(t, right(col), base0, {align:'right'}); };
+    let base0 = 0;
+    lay.roster.forEach((r, i) => {
+      const o = c.rows[r.id], yb = base(i), here = r.att === 'present';
+      base0 = yb;
+      cols.forEach(col => {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(fs); doc.setTextColor(...ink);
+        switch(col.k){
+          case 'name': fit(col, r.name); doc.text(r.name, X(3), yb); break;
+          case 'start': if(o.start) money(col, o.start); else doc.text('–', right(col), yb, {align:'right'}); break;
+          case 'att': if(here) doc.text('x', center(col), yb, {align:'center'}); break;
+          case 'exc': if(r.att === 'excused') doc.text('x', center(col), yb, {align:'center'}); break;
+          case 'abs': if(r.att === 'absent') doc.text('x', center(col), yb, {align:'center'}); break;
+          case 'pen': { const cnt = here ? (o.cnt[col.p.id] || 0) : 0; if(cnt) tally(doc, X(col.x), col.w * s, yRow(i), rowMM, cnt, fs); break; }
+          case 'total': doc.setFont('helvetica', 'bold'); money(col, o.total); break;
+          case 'paid': if(o.paid) money(col, o.paid); break;
+          case 'open':
+            if(o.open){ doc.setFont('helvetica', 'bold'); doc.setTextColor(...red); money(col, o.open); }
+            else if(o.total){ doc.setFontSize(fs * 0.8); doc.setTextColor(...green); fit(col, 'bezahlt'); doc.text('bezahlt', center(col), yb, {align:'center'}); }
+            break;
         }
-      }
+      });
     });
-    // summary below the table: two compact columns, kept on the same page whenever it fits
-    let y = doc.lastAutoTable.finalY + 6;
-    if(y > 190){ doc.addPage(); y = 18; }
+    // Ø: one value for the whole column
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(...ink);
+    doc.setFontSize(10); fit(avg, moneyTxt(c.avg));
+    doc.text(moneyTxt(c.avg), X(avg.x + avg.w / 2), (yHB + yB) / 2 + 1.3, {align:'center'});
+    // box texts
+    const bx0 = X(boxX) + 1.6, bfs = Math.min(8.5, rowMM / PT * 0.5), bb = k => by(k) + rowMM / 2 + bfs * PT * 0.35;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(bfs);
+    if(lay.kasse){
+      doc.setTextColor(...ink); doc.text(lay.kasse.name + ' ', bx0, bb(0));
+      const w1 = doc.getTextWidth(lay.kasse.name + ' ');
+      doc.setTextColor(...red); doc.text(priceTxt(lay.kasse.cents), bx0 + w1, bb(0));
+      const who = forgotKasse(g, c, lay);
+      if(who){ doc.setTextColor(...ink); doc.setFont('helvetica', 'bold'); doc.text(who, X(R) - 1.6, bb(0), {align:'right', maxWidth: lay.box.w * s - w1 - 12}); doc.setFont('helvetica', 'normal'); }
+    }
+    doc.setTextColor(...ink);
+    doc.text('vorletzte macht Liste', bx0, bb(1));
     const lm = listMaker(g, c);
-    const colA = [
-      ['Kasse gesamt', money(c.total) + (c.fees ? '  (inkl. ' + money(c.fees) + ' Mahngebühren)' : '')],
-      ['Noch offen', money(c.open)],
-      ['Ø Strafen (ohne Startgeld)', money(c.avg)]
-    ];
-    const colB = [
-      ['Zahlbar bis', fmtDate(c.dueDate) + ', danach +' + money(g.rules.overdueFee) + ' Mahngebühr'],
-      ['Nächste Liste schreibt', lm ? lm.r.name + (lm.auto ? ' (Vorletzte nach Strafen)' : '') : '–']
-    ];
-    doc.setFontSize(8.5);
-    const kv = (rows, x) => rows.forEach(([k, v], i) => {
-      const yy = y + i * 4.6;
-      doc.setFont('helvetica','normal'); doc.setTextColor(...muted); doc.text(k, x, yy);
-      doc.setFont('helvetica','bold'); doc.setTextColor(...ink); doc.text(v, x + 42, yy);
+    doc.text('Name:', bx0, bb(2));
+    if(lm){ doc.setFont('helvetica', 'bold'); doc.text(lm.r.name, bx0 + doc.getTextWidth('Name:  ') + 1, bb(2)); }
+    // summary under the box
+    let sy = by(3) + rowMM * 1.1;
+    const sfs = Math.min(9, rowMM / PT * 0.52);
+    doc.setFontSize(sfs);
+    summaryLines(g, c).forEach(([k, v], i) => {
+      if(sy + 2 > yB - 1) return;
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(...grey); doc.text(k, bx0, sy);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(...(k === 'Noch offen' && c.open ? red : ink)); doc.text(v, X(R) - 1.6, sy, {align:'right'});
+      sy += sfs * PT * 1.65;
     });
-    kv(colA, M); kv(colB, M + 118);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...muted);
-    doc.text('Zahlen = Anzahl der Strafen.  * zahlen alle Anwesenden außer dem Werfer.  Fehlen mit Abmeldung: Ø des Abends, ohne Abmeldung: ' + money(g.rules.absentFee) + ' + Ø.', M, y + 3 * 4.6 + 1.5);
   });
   const pages = doc.getNumberOfPages();
-  for(let i = 1; i <= pages; i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(150); doc.text('Seite ' + i + ' von ' + pages + '  ·  erstellt am ' + fmtDate(todayISO()), PW - M, 203, {align:'right'}); }
+  for(let i = 1; i <= pages; i++){ doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(150); doc.text('KegelTab · erstellt am ' + fmtDate(todayISO()) + (pages > 1 ? '  ·  Seite ' + i + ' von ' + pages : ''), 289, 204, {align:'right'}); }
   return doc;
+}
+/* Strichliste like on paper: groups of five (four strokes, one across). Falls back to the number if it does not fit. */
+function tally(doc, x, w, yTop, h, n, fs){
+  const gap = Math.min(1.05, h * 0.2), gGap = gap * 1.8, sh = h * 0.56;
+  const full = Math.floor(n / 5), rem = n % 5;
+  const need = full * (3 * gap + gGap) + (rem ? (rem - 1) * gap : -gGap);
+  if(need > w - 2.4){
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(fs); doc.setTextColor(0);
+    doc.text(String(n), x + w / 2, yTop + h / 2 + fs * 0.3528 * 0.35, {align:'center'});
+    return;
+  }
+  const y1 = yTop + (h - sh) / 2, y2 = y1 + sh;
+  let px = x + (w - need) / 2;
+  doc.setLineWidth(0.28); doc.setDrawColor(0);
+  for(let gI = 0; gI < full + (rem ? 1 : 0); gI++){
+    const k = gI < full ? 4 : rem;
+    for(let j = 0; j < k; j++) doc.line(px + j * gap, y1, px + j * gap, y2);
+    if(gI < full) doc.line(px - gap * 0.5, y2 - sh * 0.15, px + 3 * gap + gap * 0.5, y1 + sh * 0.15);
+    px += 3 * gap + gGap;
+  }
+}
+
+/* ---------- Excel ---------- */
+async function exportXlsx(games){
+  games = games.filter(Boolean); if(!games.length){ toast('Keine Abende zum Exportieren.'); return; }
+  toast('Excel wird erstellt…');
+  try{ await loadLib('xlsx'); }catch(e){ toast('Excel-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
+  const buf = await buildXlsx(games).xlsx.writeBuffer();
+  saveFile(fileStem(games) + '.xlsx', new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+}
+const XL_MONEY = '#,##0.00 "€";-#,##0.00 "€";""';
+function buildXlsx(games){
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'KegelTab';
+  const RED = 'FFE60000', thin = {style:'thin', color:{argb:'FF000000'}}, med = {style:'medium', color:{argb:'FF000000'}};
+  const font = (o) => Object.assign({name:'Calibri', size:11}, o || {});
+  if(games.length > 1) overviewSheet(wb, games, thin);
+  const used = {};
+  games.forEach(g => {
+    const c = calc(g), lay = sheetLayout(g), cols = lay.cols, n = lay.roster.length;
+    let name = g.date; let k = 2; while(used[name]) name = g.date + ' (' + (k++) + ')'; used[name] = 1;
+    const ws = wb.addWorksheet(name, {
+      pageSetup:{paperSize:9, orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:1, horizontalCentered:true,
+        margins:{left:0.3, right:0.3, top:0.4, bottom:0.4, header:0.2, footer:0.2}},
+      views:[{showGridLines:false}]
+    });
+    // widths: template units → mm (same scale as the PDF) → Excel characters
+    const s = 281 / lay.TOTAL, chars = u => Math.max(2, (u * s * 3.78 - 5) / 7);
+    ws.columns = cols.map(col => ({width: chars(col.w)})).concat([{width: chars(lay.box.w)}]);
+    const boxC = cols.length + 1, last = boxC;
+    const ci = key => cols.findIndex(col => col.k === key) + 1;
+    // row 1: Datum / Kegelclub
+    ws.getRow(1).height = 22;
+    ws.getCell(1, 1).value = 'Datum:'; ws.getCell(1, 1).font = font();
+    const dC = ws.getCell(1, 2); dC.value = fmtDate(g.date); dC.font = font(); dC.alignment = {horizontal:'center', shrinkToFit:true}; dC.border = {bottom:thin};
+    // "Kegelclub:" over the two "nicht erscheinen" columns, the name on a line above the next four columns (like on paper)
+    const lab = ci('exc'), kStart = ci('abs') + 1, kEnd = Math.min(cols.length - 4, kStart + 3);
+    ws.mergeCells(1, lab, 1, kStart - 1);
+    ws.getCell(1, lab).value = 'Kegelclub:'; ws.getCell(1, lab).font = font(); ws.getCell(1, lab).alignment = {horizontal:'left', shrinkToFit:true};
+    ws.mergeCells(1, kStart, 1, kEnd);
+    const cC = ws.getCell(1, kStart); cC.value = S.config.club || ''; cC.font = font(); cC.alignment = {horizontal:'center'};
+    for(let j = kStart; j <= kEnd; j++) ws.getCell(1, j).border = {bottom:thin};
+    ws.getRow(2).height = 6;
+    // row 3: slanted column heads
+    const HR = 3; ws.getRow(HR).height = 252 * s * 2.835;
+    cols.forEach((col, i) => {
+      const cell = ws.getCell(HR, i + 1);
+      if(i < 2){ cell.value = i ? 'Startgeld' : 'Name'; cell.font = font(); cell.alignment = {vertical:'bottom', horizontal:'left'}; cell.border = {left:thin, right: i ? undefined : thin, top:thin, bottom:thin}; return; }
+      cell.value = {richText: col.parts.map(([t, st]) => ({text:t, font: font(st === 'r' ? {color:{argb:RED}} : st === 's' ? {size:6} : {})}))};
+      cell.alignment = {textRotation:45, vertical:'bottom', horizontal:'left'};
+      cell.border = {left: cols[i - 1].thick ? med : thin, right: col.thick ? med : thin, top:thin, bottom:thin};
+    });
+    // data rows (alphabetical, like the paper list)
+    const R0 = HR + 1;
+    lay.roster.forEach((r, i) => {
+      const o = c.rows[r.id], here = r.att === 'present', row = ws.getRow(R0 + i);
+      row.height = Math.min(28.3, 538 / Math.max(n, 1)) * s * 2.835;
+      cols.forEach((col, j) => {
+        const cell = row.getCell(j + 1);
+        let v = null, f = font(), al = {vertical:'middle', horizontal:'center'};
+        switch(col.k){
+          case 'name': v = r.name; al = {vertical:'middle', horizontal:'left'}; break;
+          case 'start': v = o.start / 100; al.horizontal = 'right'; break;
+          case 'att': v = here ? 'x' : null; break;
+          case 'exc': v = r.att === 'excused' ? 'x' : null; break;
+          case 'abs': v = r.att === 'absent' ? 'x' : null; break;
+          case 'pen': v = here && o.cnt[col.p.id] ? o.cnt[col.p.id] : null; break;
+          case 'total': v = o.total / 100; f = font({bold:true}); al.horizontal = 'right'; break;
+          case 'avg': v = i === 0 ? c.avg / 100 : null; f = font({bold:true}); break;
+          case 'paid': v = o.paid ? o.paid / 100 : null; al.horizontal = 'right'; break;
+          case 'open': v = o.open ? o.open / 100 : (o.total ? 'bezahlt' : null); f = o.open ? font({bold:true, color:{argb:RED}}) : font({size:9, color:{argb:'FF1D8A57'}}); al.horizontal = o.open ? 'right' : 'center'; break;
+        }
+        al.shrinkToFit = true; // never "#####": Excel makes the text smaller instead
+        cell.value = v; cell.font = f; cell.alignment = al;
+        if(['start','total','avg','paid','open'].includes(col.k) && typeof v === 'number') cell.numFmt = XL_MONEY;
+        const isAvg = col.k === 'avg';
+        cell.border = {left: j && cols[j - 1].thick ? med : thin, right: col.thick ? med : thin,
+          top: isAvg && i > 0 ? undefined : thin, bottom: isAvg && i < n - 1 ? undefined : thin};
+      });
+      row.getCell(boxC).border = {right:thin, bottom: i === n - 1 ? thin : undefined};
+    });
+    if(n > 1) ws.mergeCells(R0, ci('avg'), R0 + n - 1, ci('avg'));
+    // box on the right
+    const b0 = R0 + Math.min(4, Math.max(0, n - 3));
+    const boxCell = (rr, value, top, bottom) => { const cell = ws.getCell(rr, boxC); cell.value = value; cell.font = font({size:9}); cell.alignment = {vertical:'middle', horizontal:'left', indent:1}; cell.border = {left:med, right:thin, top: top || thin, bottom: bottom || thin}; };
+    const who = forgotKasse(g, c, lay);
+    boxCell(b0, lay.kasse ? {richText:[{text: lay.kasse.name + ' ', font: font({size:9})}, {text: priceTxt(lay.kasse.cents), font: font({size:9, color:{argb:RED}})}].concat(who ? [{text:'   ' + who, font: font({size:9, bold:true})}] : [])} : '', med);
+    boxCell(b0 + 1, 'vorletzte macht Liste');
+    const lm = listMaker(g, c);
+    boxCell(b0 + 2, {richText:[{text:'Name:  ', font: font({size:9})}].concat(lm ? [{text: lm.r.name, font: font({size:9, bold:true})}] : [])}, null, med);
+    // summary under the box
+    summaryLines(g, c).forEach(([kk, vv], i) => {
+      const rr = b0 + 4 + i; if(rr > R0 + n - 1) return;
+      const cell = ws.getCell(rr, boxC);
+      cell.value = {richText:[{text: kk + ':  ', font: font({size:9, color:{argb:'FF777777'}})}, {text: vv, font: font({size:9, bold:true, color:{argb: kk === 'Noch offen' && c.open ? RED : 'FF000000'}})}]};
+      cell.alignment = {vertical:'middle', horizontal:'left', indent:1};
+    });
+    ws.pageSetup.printArea = 'A1:' + ws.getColumn(last).letter + (R0 + n - 1);
+    ws.headerFooter.oddFooter = '&R&8KegelTab · erstellt am ' + fmtDate(todayISO());
+  });
+  return wb;
+}
+/* Overview over several evenings (first sheet): what everybody owes per evening. */
+function overviewSheet(wb, games, thin){
+  const ws = wb.addWorksheet('Übersicht', {pageSetup:{paperSize:9, orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0}, views:[{state:'frozen', ySplit:3, xSplit:1}]});
+  const players = {}; games.forEach(g => g.roster.forEach(r => players[r.id] = r.name));
+  const ids = Object.keys(players).sort((a, b) => players[a].localeCompare(players[b], 'de'));
+  const cs = games.map(calc);
+  ws.getCell(1, 1).value = 'Kegelclub ' + S.config.club + ' – Übersicht ' + fmtDate(games[0].date) + ' bis ' + fmtDate(games[games.length-1].date);
+  ws.getCell(1, 1).font = {name:'Calibri', size:14, bold:true};
+  const head = ['Name'].concat(games.map(g => fmtDate(g.date))).concat(['Summe', 'davon bezahlt', 'Noch offen']);
+  ws.getRow(3).values = head;
+  ws.getRow(3).eachCell(cell => { cell.font = {name:'Calibri', size:11, bold:true}; cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true}; cell.border = {top:thin, bottom:thin, left:thin, right:thin}; cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF2F2F2'}}; });
+  const colSum = games.map(() => 0); let tS = 0, tP = 0, tO = 0;
+  ids.forEach((id, i) => {
+    let sum = 0, paid = 0, op = 0; const vals = [players[id]];
+    cs.forEach((c, k) => { const o = c.rows[id]; if(o){ vals.push((o.total + o.fee) / 100); sum += o.total + o.fee; paid += o.paid; op += o.open; colSum[k] += o.total + o.fee; } else vals.push(null); });
+    vals.push(sum / 100, paid / 100, op / 100); tS += sum; tP += paid; tO += op;
+    ws.getRow(4 + i).values = vals;
+  });
+  ws.getRow(4 + ids.length).values = ['Summe'].concat(colSum.map(v => v / 100)).concat([tS / 100, tP / 100, tO / 100]);
+  for(let r = 4; r <= 4 + ids.length; r++) ws.getRow(r).eachCell({includeEmpty:true}, (cell, cn) => {
+    if(cn > head.length) return;
+    cell.border = {top:thin, bottom:thin, left:thin, right:thin}; cell.font = {name:'Calibri', size:11, bold: r === 4 + ids.length || cn === head.length};
+    if(cn > 1){ cell.numFmt = XL_MONEY; cell.alignment = {horizontal:'right'}; }
+    if(cn === head.length && typeof cell.value === 'number' && cell.value > 0) cell.font = {name:'Calibri', size:11, bold:true, color:{argb:'FFE60000'}};
+  });
+  ws.columns = [{width:16}].concat(games.map(() => ({width:12}))).concat([{width:12}, {width:13}, {width:12}]);
 }
 
 /* ---------- PWA: offline cache, updates, install ---------- */
