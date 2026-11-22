@@ -1,6 +1,6 @@
 {
-  "appId": "de.umwerfenden.kegelliste",
-  "appName": "Kegelliste",
+  "appId": "de.umwerfenden.kegeltab",
+  "appName": "KegelTab",
   "webDir": "www",
   "backgroundColor": "#d93a2b",
   "ios": {
