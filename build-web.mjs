@@ -21,9 +21,8 @@ ${page}
 writeFileSync('www/index.html', html);
 
 const libs = [
-  'node_modules/xlsx/dist/xlsx.full.min.js',
-  'node_modules/jspdf/dist/jspdf.umd.min.js',
-  'node_modules/jspdf-autotable/dist/jspdf.plugin.autotable.min.js'
+  'node_modules/exceljs/dist/exceljs.min.js',
+  'node_modules/jspdf/dist/jspdf.umd.min.js'
 ];
 for (const f of libs) copyFileSync(f, 'www/lib/' + f.split('/').pop());
 console.log('www/ gebaut:', html.length, 'Zeichen, Bibliotheken:', libs.length);
