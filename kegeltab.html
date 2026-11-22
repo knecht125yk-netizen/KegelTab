@@ -293,7 +293,7 @@ function defaultConfig(){
       {id:'krug',name:'Krug bringen',cents:100,mode:'self',emoji:'🍺'},
       {id:'kasse',name:'Kasse vergessen',cents:100,mode:'self',emoji:'💸'}
     ],
-    rules:{startgeld:200, startgeldForAbsent:true, absentFee:500, overdueDays:28, overdueFee:200}
+    rules:{startgeld:200, startgeldForAbsent:true, absentFee:500, overdueDays:28, overdueFee:200, avgStep:10}
   };
 }
 
@@ -415,7 +415,9 @@ function calc(g){
     });
   });
   const sumPen = present.reduce((s,p) => s + rows[p.id].pen, 0);
-  const avg = present.length ? Math.round(sumPen / present.length) : 0;
+  // Ø rounded to the first decimal (10 cents) for evenings started with avgStep = 10; older evenings keep exact cents
+  const step = R.avgStep || 1;
+  const avg = present.length ? Math.round(sumPen / present.length / step) * step : 0;
   let total = 0, paid = 0, open = 0, fees = 0;
   // Payment deadline: after overdueDays days the fee is added to everyone who has not fully paid yet
   // (independent of whether the evening was "ended" in the app).
@@ -591,6 +593,8 @@ function render(){
   if(isTyping()){ S.renderPending = true; return; }
   S.renderPending = false;
   const cfg = S.config;
+  // one-time update of older saved settings: Ø rounded to 10 cents (applies to the running and all new evenings)
+  if(cfg && cfg.rules && cfg.rules.avgStep == null && !S.readOnly){ cfg.rules.avgStep = 10; persist('config'); syncOpenGames(); }
   $('#clubName').textContent = 'KegelTab';
   $('#subline').textContent = cfg ? cfg.club + ' · ' + weekday(todayISO()).slice(0,2) + ', ' + fmtDate(todayISO()) : 'wird geladen…';
   $('#sync').innerHTML = S.mode === 'db' ? '<i' + (S.loadNote ? ' class="off"' : '') + '></i>' + (S.readOnly ? 'nur lesen' : 'geteilt') : S.mode === 'native' ? '<i></i>auf diesem Gerät' : '<i class="off"></i>nur dieses Gerät';
