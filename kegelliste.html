@@ -63,7 +63,8 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 /* dock */
 .dock{flex:none;background:var(--surface);border-top:1px solid var(--line)}
 .dock .in{max-width:1200px;margin:0 auto;padding-block:10px}
-.dock-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:7px;display:flex;justify-content:space-between;gap:8px}
+.dock-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:30px}
+.undo-btn{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:0 12px;min-height:32px;font-size:12.5px;font-weight:700;text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
 .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
 .chips::-webkit-scrollbar{display:none}
 @media (min-width:900px){.chips{flex-wrap:wrap;overflow:visible}}
@@ -683,7 +684,11 @@ function renderDock(){
   $('#dock').hidden = !show;
   if(!show) return;
   const pen = g.penalties.find(p => p.id === S.selPen);
-  $('#dockIn').innerHTML = '<div class="dock-label"><span>Strafe wählen</span><span>' + (pen && pen.mode === 'others' ? 'zahlen alle außer Werfer' : '') + '</span></div><div class="chips" role="group" aria-label="Strafe">' +
+  // Quiet undo instead of a popup after every tap: shows the last entry of this evening.
+  const last = S.undo.length && S.undo[S.undo.length - 1].gid === g.id ? S.undo[S.undo.length - 1] : null;
+  const lastTxt = last ? (((g.roster.find(r => r.id === last.pid) || {}).name || '') + ': ' + ((g.penalties.find(p => p.id === last.penId) || {}).name || '')) : '';
+  $('#dockIn').innerHTML = '<div class="dock-label"><span>Strafe wählen' + (pen && pen.mode === 'others' ? ' · zahlen alle außer Werfer' : '') + '</span>' +
+    (last ? '<button class="undo-btn" data-act="undo" aria-label="Letzten Eintrag zurücknehmen: ' + esc(lastTxt) + '">↶ ' + esc(lastTxt) + '</button>' : '') + '</div><div class="chips" role="group" aria-label="Strafe">' +
     g.penalties.map(p => '<button class="pen" data-act="selPen" data-pen="' + p.id + '" aria-pressed="' + (p.id === S.selPen) + '"><span class="e">' + esc(p.emoji || '•') + '</span><span class="t"><b>' + esc(p.name) + '</b><span class="num">' + eur(p.cents) + (p.mode === 'others' ? ' · alle anderen' : '') + '</span></span></button>').join('') + '</div>';
 }
 function gameAwards(g, c){
@@ -968,15 +973,13 @@ function act(a, el){
       render();
       animTap(g, d.pid, pen);
       if(big){ confetti(110); banner('ALLE NEUNE!', '🎳'); }
-      toast((pen.mode === 'others' ? r.name + ': ' : r.name + ' · ') + quip(pen), true);
       wake();
       return;
     }
     case 'undo': {
       const u = S.undo.pop(); if(!u || !S.games[u.gid]) return;
       addPen(S.games[u.gid], u.pid, u.penId, -1, false);
-      $('#toastHost').innerHTML = '';
-      toast('Rückgängig gemacht.');
+      clack();
       break;
     }
     case 'player': { const gg = g; if(!gg) return; S.sheet = {type:'player', gid:gg.id, pid:d.pid}; break; }
@@ -1178,80 +1181,187 @@ async function exportXlsx(games){
   games = games.filter(Boolean); if(!games.length){ toast('Keine Abende zum Exportieren.'); return; }
   toast('Excel wird erstellt…');
   try{ await loadLib('xlsx'); }catch(e){ toast('Excel-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
+  const out = XLSX.write(buildXlsx(games), {bookType:'xlsx', type:'array'});
+  const fn = 'Kegelliste_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.xlsx';
+  saveFile(fn, new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+}
+/* Excel layout: one sheet per evening (title, header row with filter, rows grouped anwesend → entschuldigt →
+   unentschuldigt, sum row, summary block) plus an overview sheet when several evenings are exported.
+   Amounts are real numbers in € format, so Excel can keep calculating with them. */
+const XL_MONEY = '#,##0.00 "€";-#,##0.00 "€";"–"';
+function buildXlsx(games){
   const wb = XLSX.utils.book_new();
-  const money = '#,##0.00 "€"';
+  const fmt = (ws, r, c, z) => { const cell = ws[XLSX.utils.encode_cell({r, c})]; if(cell && typeof cell.v === 'number') cell.z = z; };
+  const attTxt = {present:'anwesend', excused:'entschuldigt', absent:'unentschuldigt'};
   if(games.length > 1){
     const players = {}; games.forEach(g => g.roster.forEach(r => players[r.id] = r.name));
     const ids = Object.keys(players).sort((a,b) => players[a].localeCompare(players[b],'de'));
     const cs = games.map(calc);
-    const aoa = [['Name'].concat(games.map(g => fmtDate(g.date))).concat(['Summe','Offen'])];
-    ids.forEach(id => { let sum = 0, op = 0; const row = [players[id]]; cs.forEach(c => { const o = c.rows[id]; row.push(o ? (o.total + o.fee)/100 : ''); if(o){ sum += o.total + o.fee; op += o.open; } }); row.push(sum/100, op/100); aoa.push(row); });
+    const aoa = [['Kegelclub ' + S.config.club + ' – Übersicht ' + fmtDate(games[0].date) + ' bis ' + fmtDate(games[games.length-1].date)], [],
+      ['Name'].concat(games.map(g => fmtDate(g.date))).concat(['Summe', 'davon bezahlt', 'Noch offen'])];
+    const colSum = games.map(() => 0); let tSum = 0, tPaid = 0, tOpen = 0;
+    ids.forEach(id => {
+      let sum = 0, paid = 0, op = 0; const row = [players[id]];
+      cs.forEach((c, k) => { const o = c.rows[id]; if(o){ row.push((o.total + o.fee)/100); sum += o.total + o.fee; paid += o.paid; op += o.open; colSum[k] += o.total + o.fee; } else row.push(''); });
+      row.push(sum/100, paid/100, op/100); tSum += sum; tPaid += paid; tOpen += op; aoa.push(row);
+    });
+    aoa.push(['Summe'].concat(colSum.map(v => v/100)).concat([tSum/100, tPaid/100, tOpen/100]));
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    fmtMoney(ws, aoa, 1, money); ws['!cols'] = [{wch:14}].concat(aoa[0].slice(1).map(() => ({wch:11})));
+    for(let r = 3; r < aoa.length; r++) for(let c = 1; c < aoa[2].length; c++) fmt(ws, r, c, XL_MONEY);
+    ws['!cols'] = [{wch:16}].concat(games.map(() => ({wch:12}))).concat([{wch:12},{wch:13},{wch:12}]);
+    ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:Math.min(aoa[2].length - 1, 6)}}];
+    ws['!autofilter'] = {ref: XLSX.utils.encode_range({s:{r:2,c:0}, e:{r:aoa.length - 2, c:aoa[2].length - 1}})};
     XLSX.utils.book_append_sheet(wb, ws, 'Übersicht');
   }
-  const used = {};
+  const usedNames = {};
   games.forEach(g => {
-    const t = tableFor(g);
-    const aoa = [['Kegelclub ' + S.config.club + ' – Kegelliste ' + fmtDate(g.date)], []].concat([t.head]).concat(t.rows).concat([[], ['Durchschnitt Ø (ohne Startgeld)', '', t.c.avg/100], ['Kasse gesamt', '', t.c.total/100], ['davon Mahngebühren', '', t.c.fees/100], ['Noch offen', '', t.c.open/100], ['Zahlbar bis', '', fmtDate(t.c.dueDate)], ['Zahlungsfrist', '', g.rules.overdueDays + ' Tage, sonst ' + eur(g.rules.overdueFee)]]);
-    const lm = listMaker(g, t.c); if(lm) aoa.push(['Nächste Liste macht', '', lm.r.name]);
+    const c = calc(g), pens = g.penalties, nPen = pens.length;
+    const head = ['Name', 'Status', 'Startgeld'].concat(pens.map(p => p.name + ' (' + eur(p.cents) + ')' + (p.mode === 'others' ? ' *' : ''))).concat(['Strafen', 'Abwesenheit', 'Mahngebühr', 'Gesamt', 'Bezahlt', 'Offen']);
+    const aoa = [['Kegelclub ' + S.config.club + ' – Kegelliste vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')'], [], head];
+    const sum = {start:0, pen:0, abs:0, fee:0, tot:0, paid:0, open:0, cnt:pens.map(() => 0)};
+    rosterOrdered(g).forEach(r => {
+      const o = c.rows[r.id];
+      pens.forEach((p, i) => sum.cnt[i] += o.cnt[p.id] || 0);
+      sum.start += o.start; sum.pen += o.pen; sum.abs += o.absence; sum.fee += o.fee; sum.tot += o.total + o.fee; sum.paid += o.paid; sum.open += o.open;
+      aoa.push([r.name, attTxt[r.att], o.start/100].concat(pens.map(p => o.cnt[p.id] || '')).concat([o.pen/100, o.absence/100, o.fee/100, (o.total + o.fee)/100, o.paid/100, o.open/100]));
+    });
+    const lastData = aoa.length - 1;
+    aoa.push(['Summe', '', sum.start/100].concat(sum.cnt.map(n => n || '')).concat([sum.pen/100, sum.abs/100, sum.fee/100, sum.tot/100, sum.paid/100, sum.open/100]));
+    const sumRow = aoa.length - 1;
+    const lm = listMaker(g, c);
+    const info = [[], ['Kasse gesamt', '', c.total/100], ['davon Mahngebühren', '', c.fees/100], ['Noch offen', '', c.open/100], ['Ø Strafen (ohne Startgeld)', '', c.avg/100],
+      ['Zahlbar bis', '', fmtDate(c.dueDate) + ', danach +' + eur(g.rules.overdueFee) + ' Mahngebühr'], ['Nächste Liste schreibt', '', lm ? lm.r.name : '–'], [],
+      ['* zahlen alle Anwesenden außer dem Werfer. Strafen-Spalten zeigen die Anzahl.'], ['Fehlen mit Abmeldung: Ø des Abends. Ohne Abmeldung: ' + eur(g.rules.absentFee) + ' + Ø.']];
+    const infoStart = aoa.length;
+    info.forEach(r => aoa.push(r));
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    fmtMoney(ws, aoa, 2, money, t.head);
-    ws['!cols'] = [{wch:14},{wch:14}].concat(t.head.slice(2).map(h => ({wch: Math.min(22, Math.max(9, h.length * .7))})));
-    let name = g.date; let i = 2; while(used[name]) name = g.date + ' (' + (i++) + ')'; used[name] = 1;
+    const iStr = 3 + nPen;
+    for(let r = 3; r <= sumRow; r++){ fmt(ws, r, 2, XL_MONEY); for(let k = iStr; k < iStr + 6; k++) fmt(ws, r, k, XL_MONEY); }
+    for(let r = infoStart; r < aoa.length; r++) fmt(ws, r, 2, XL_MONEY);
+    ws['!cols'] = [{wch:18}, {wch:15}, {wch:11}]
+      .concat(pens.map(p => ({wch: Math.min(18, Math.max(9, Math.ceil((p.name.length + 10) * 0.75)))})))
+      .concat([{wch:11}, {wch:13}, {wch:13}, {wch:11}, {wch:11}, {wch:11}]);
+    const merges = [{s:{r:0,c:0}, e:{r:0,c:Math.min(head.length - 1, 8)}}];
+    for(let r = infoStart; r < aoa.length; r++) if(aoa[r].length === 3) merges.push({s:{r,c:0}, e:{r,c:1}});
+    ws['!merges'] = merges;
+    ws['!autofilter'] = {ref: XLSX.utils.encode_range({s:{r:2,c:0}, e:{r:lastData, c:head.length - 1}})};
+    let name = g.date; let i = 2; while(usedNames[name]) name = g.date + ' (' + (i++) + ')'; usedNames[name] = 1;
     XLSX.utils.book_append_sheet(wb, ws, name);
   });
-  const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-  const fn = 'Kegelliste_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.xlsx';
-  saveFile(fn, new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
-}
-function fmtMoney(ws, aoa, headRow, z, head){
-  const nPen = head ? head.length - 9 : 0;
-  const lastDataRow = head ? headRow + aoa.slice(headRow + 1).findIndex(r => r.length === 0) : aoa.length;
-  for(let r = headRow; r < aoa.length; r++) for(let col = 0; col < aoa[r].length; col++){
-    if(typeof aoa[r][col] !== 'number') continue;
-    const isCount = head && r <= lastDataRow && col >= 3 && col < 3 + nPen;
-    const cell = ws[XLSX.utils.encode_cell({r, c:col})];
-    if(cell && !isCount) cell.z = z;
-  }
+  return wb;
 }
 async function exportPdf(games){
   games = games.filter(Boolean); if(!games.length){ toast('Keine Abende zum Exportieren.'); return; }
   toast('PDF wird erstellt…');
   try{ await loadLib('pdf'); }catch(e){ toast('PDF-Modul konnte nicht geladen werden. Internet prüfen.'); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
-  const red = [217,58,43], wood = [185,120,63];
-  const num = v => typeof v === 'number' ? v.toLocaleString('de-DE',{minimumFractionDigits:2, maximumFractionDigits:2}) + ' €' : v;
-  games.forEach((g, gi) => {
-    if(gi) doc.addPage();
-    const t = tableFor(g);
-    doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,24,39);
-    doc.text('Kegelclub ' + S.config.club, 14, 16);
-    doc.setFontSize(12); doc.setFont('helvetica','normal'); doc.setTextColor(90,99,119);
-    doc.text('Kegelliste vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')', 14, 23);
-    doc.setTextColor(...red); doc.setFont('helvetica','bold');
-    doc.text('Kasse: ' + eur(t.c.total) + (t.c.fees ? ' (inkl. ' + eur(t.c.fees) + ' Mahngebühren)' : '') + '   ·   Ø ohne Startgeld: ' + eur(t.c.avg) + '   ·   offen: ' + eur(t.c.open), 283, 23, {align:'right'});
-    const nPen = g.penalties.length;
-    doc.autoTable({
-      startY: 28,
-      head: [t.head.map(h => h.replace(/ \(/, '\n('))],
-      body: t.rows.map(r => r.map((v, i) => (i >= 2 && i < 3) || i >= 3 + nPen ? num(v) : v)),
-      theme:'grid', styles:{fontSize:7.5, cellPadding:1.6, valign:'middle', lineColor:[217,222,232]},
-      headStyles:{fillColor:wood, textColor:255, fontSize:7, halign:'center'},
-      columnStyles: Object.fromEntries(t.head.map((h,i) => [i, i < 2 ? {halign:'left'} : {halign: i >= 3 + nPen ? 'right' : 'center'}])),
-      didParseCell: data => { if(data.section === 'body' && data.column.index === t.head.length - 1 && t.rows[data.row.index][data.column.index] > 0){ data.cell.styles.textColor = red; data.cell.styles.fontStyle = 'bold'; } },
-      margin:{left:14, right:14}
-    });
-    let y = doc.lastAutoTable.finalY + 8;
-    doc.setFontSize(9.5); doc.setTextColor(90,99,119); doc.setFont('helvetica','normal');
-    const lm = listMaker(g, t.c);
-    doc.text('Zahlungsfrist: ' + g.rules.overdueDays + ' Tage, danach ' + eur(g.rules.overdueFee) + '.  Fehlen mit Abmeldung: Ø.  Ohne Abmeldung: ' + eur(g.rules.absentFee) + ' + Ø.' + (lm ? '   Nächste Liste: ' + lm.r.name : ''), 14, Math.min(y, 200));
-  });
-  const pages = doc.getNumberOfPages();
-  for(let i = 1; i <= pages; i++){ doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.text('Seite ' + i + ' von ' + pages + ' · erstellt ' + fmtDate(todayISO()), 283, 205, {align:'right'}); }
+  const doc = buildPdf(games);
   const fn = 'Kegelliste_' + (games.length === 1 ? games[0].date : games[0].date + '_bis_' + games[games.length-1].date) + '.pdf';
   saveFile(fn, doc.output('blob'));
+}
+/* PDF layout: A4 landscape, one evening per page. Fixed widths for name, status and money columns
+   (never wrap), the penalty columns share the rest. Groups like in the app, a sum row and a summary box. */
+function buildPdf(games){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const PW = 297, M = 12, W = PW - 2 * M;
+  const ink = [18,24,39], muted = [90,99,119], red = [217,58,43], wood = [185,120,63], woodSoft = [245,230,212], line = [217,222,232], warn = [168,99,0];
+  const money = c => (c/100).toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+  const moneyOrDash = c => c ? money(c) : '–';
+  const attTxt = {present:'anwesend', excused:'entschuldigt', absent:'unentschuldigt'};
+  const groupTxt = g => ({present:'Anwesend', excused:'Entschuldigt (zahlen Ø)', absent:'Unentschuldigt (zahlen ' + money(g.rules.absentFee) + ' + Ø)'});
+  games.forEach((g, gi) => {
+    if(gi) doc.addPage();
+    const c = calc(g), pens = g.penalties, nPen = pens.length;
+    // header
+    doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(...ink);
+    doc.text('Kegelclub ' + S.config.club, M, 15);
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...muted);
+    doc.text('Kegelliste vom ' + fmtDate(g.date) + ' (' + weekday(g.date) + ')  ·  ' + c.present + ' anwesend', M, 21.5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...ink);
+    doc.text('Kasse ' + money(c.total), PW - M, 15, {align:'right'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...(c.open ? red : muted));
+    doc.text('noch offen ' + money(c.open) + (c.fees ? '  (inkl. ' + money(c.fees) + ' Mahngebühren)' : ''), PW - M, 21.5, {align:'right'});
+    // columns: 0 Name, 1 Startgeld, pens..., then Strafen, Abwesenheit, Mahngebühr, Gesamt, Bezahlt, Offen
+    // (attendance is shown by the group rows, so no extra status column)
+    const fixed = {name:26, money:17, absence:17, fee:17};
+    const used = fixed.name + fixed.money * 5 + fixed.absence + fixed.fee; // Startgeld, Strafen, Gesamt, Bezahlt, Offen + Abwesenheit, Mahngebühr
+    const penW = Math.max(9, (W - used) / Math.max(1, nPen));
+    // penalty header: break only between words or after a hyphen, never inside a word
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.8);
+    const wrapLabel = s => {
+      const parts = s.replace(/\s*\(.*\)\s*/, '').replace(/-/g, '- ').split(/\s+/).filter(Boolean);
+      const lines = []; let cur = '';
+      parts.forEach(p => { const sep = cur && !cur.endsWith('-') ? ' ' : ''; const next = cur + sep + p; if(cur && doc.getTextWidth(next) > penW - 1.8){ lines.push(cur); cur = p; } else cur = next; });
+      if(cur) lines.push(cur);
+      return lines.join('\n');
+    };
+    const head = [['Name', 'Start-\ngeld']
+      .concat(pens.map(p => wrapLabel(p.name) + '\n' + money(p.cents) + (p.mode === 'others' ? ' *' : '')))
+      .concat(['Strafen', 'Abwesen-\nheit', 'Mahn-\ngebühr', 'Gesamt', 'Bezahlt', 'Offen'])];
+    const iStr = 2 + nPen, iOpen = iStr + 5;
+    const body = [];
+    let lastAtt = null;
+    const sum = {start:0, pen:0, abs:0, fee:0, tot:0, paid:0, open:0, cnt:{}};
+    rosterOrdered(g).forEach(r => {
+      const o = c.rows[r.id];
+      if(r.att !== lastAtt){ lastAtt = r.att; body.push([{content: groupTxt(g)[r.att], colSpan: head[0].length, styles:{fillColor:woodSoft, fontStyle:'bold', textColor:ink, fontSize:7.5, cellPadding:{top:1.2, bottom:1.2, left:2}}}]); }
+      pens.forEach(p => sum.cnt[p.id] = (sum.cnt[p.id] || 0) + (o.cnt[p.id] || 0));
+      sum.start += o.start; sum.pen += o.pen; sum.abs += o.absence; sum.fee += o.fee; sum.tot += o.total + o.fee; sum.paid += o.paid; sum.open += o.open;
+      body.push([r.name, money(o.start)]
+        .concat(pens.map(p => o.cnt[p.id] ? String(o.cnt[p.id]) : ''))
+        .concat([moneyOrDash(o.pen), moneyOrDash(o.absence), o.fee ? '+' + money(o.fee) : '–', money(o.total + o.fee), moneyOrDash(o.paid), o.open ? money(o.open) : 'bezahlt']));
+    });
+    const foot = [['Summe', money(sum.start)]
+      .concat(pens.map(p => sum.cnt[p.id] ? String(sum.cnt[p.id]) : ''))
+      .concat([money(sum.pen), money(sum.abs), sum.fee ? '+' + money(sum.fee) : '–', money(sum.tot), money(sum.paid), money(sum.open)])];
+    const colStyles = {0:{cellWidth:fixed.name, halign:'left', fontStyle:'bold'}, 1:{cellWidth:fixed.money, halign:'right'}};
+    pens.forEach((p, i) => colStyles[2 + i] = {cellWidth:penW, halign:'center'});
+    [fixed.money, fixed.absence, fixed.fee, fixed.money, fixed.money, fixed.money].forEach((w, k) => colStyles[iStr + k] = {cellWidth:w, halign:'right'});
+    doc.autoTable({
+      startY: 26, head, body, foot, theme:'grid', showFoot:'lastPage', showHead:'everyPage',
+      margin:{left:M, right:M, bottom:14}, tableWidth: W,
+      styles:{font:'helvetica', fontSize:8, cellPadding:{top:1.25, bottom:1.25, left:1.6, right:1.6}, valign:'middle', lineColor:line, lineWidth:0.2, textColor:ink, overflow:'ellipsize'},
+      headStyles:{fillColor:wood, textColor:255, fontSize:6.8, halign:'center', valign:'middle', overflow:'linebreak', cellPadding:{top:1.2, bottom:1.2, left:0.9, right:0.9}},
+      footStyles:{fillColor:[236,239,245], textColor:ink, fontStyle:'bold'},
+      columnStyles: colStyles,
+      didParseCell: d => {
+        const ci = d.column.index;
+        if(d.section === 'head'){ d.cell.styles.halign = ci === 0 ? 'left' : (ci >= 2 && ci < iStr) ? 'center' : 'right'; }
+        if(d.section === 'foot'){ d.cell.styles.halign = ci === 0 ? 'left' : (ci >= 2 && ci < iStr) ? 'center' : 'right'; }
+        if(d.section === 'body' && Array.isArray(d.row.raw) && d.row.raw.length > 1){
+          if(ci === iOpen){ const open = d.cell.raw !== 'bezahlt'; d.cell.styles.textColor = open ? red : [29,138,87]; d.cell.styles.fontStyle = 'bold'; }
+          if(ci === iStr + 2 && String(d.cell.raw).startsWith('+')){ d.cell.styles.textColor = warn; d.cell.styles.fontStyle = 'bold'; }
+          if(ci === iStr + 3){ d.cell.styles.fontStyle = 'bold'; }
+          if(d.cell.raw === '–'){ d.cell.styles.textColor = [170,176,190]; }
+        }
+      }
+    });
+    // summary below the table: two compact columns, kept on the same page whenever it fits
+    let y = doc.lastAutoTable.finalY + 6;
+    if(y > 190){ doc.addPage(); y = 18; }
+    const lm = listMaker(g, c);
+    const colA = [
+      ['Kasse gesamt', money(c.total) + (c.fees ? '  (inkl. ' + money(c.fees) + ' Mahngebühren)' : '')],
+      ['Noch offen', money(c.open)],
+      ['Ø Strafen (ohne Startgeld)', money(c.avg)]
+    ];
+    const colB = [
+      ['Zahlbar bis', fmtDate(c.dueDate) + ', danach +' + money(g.rules.overdueFee) + ' Mahngebühr'],
+      ['Nächste Liste schreibt', lm ? lm.r.name + (lm.auto ? ' (Vorletzte nach Strafen)' : '') : '–']
+    ];
+    doc.setFontSize(8.5);
+    const kv = (rows, x) => rows.forEach(([k, v], i) => {
+      const yy = y + i * 4.6;
+      doc.setFont('helvetica','normal'); doc.setTextColor(...muted); doc.text(k, x, yy);
+      doc.setFont('helvetica','bold'); doc.setTextColor(...ink); doc.text(v, x + 42, yy);
+    });
+    kv(colA, M); kv(colB, M + 118);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...muted);
+    doc.text('Zahlen = Anzahl der Strafen.  * zahlen alle Anwesenden außer dem Werfer.  Fehlen mit Abmeldung: Ø des Abends, ohne Abmeldung: ' + money(g.rules.absentFee) + ' + Ø.', M, y + 3 * 4.6 + 1.5);
+  });
+  const pages = doc.getNumberOfPages();
+  for(let i = 1; i <= pages; i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(150); doc.text('Seite ' + i + ' von ' + pages + '  ·  erstellt am ' + fmtDate(todayISO()), PW - M, 203, {align:'right'}); }
+  return doc;
 }
 
 /* ---------- PWA: offline cache, updates, install ---------- */
