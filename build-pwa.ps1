@@ -5,7 +5,7 @@ param([string]$Build = (Get-Date -Format 'yyyyMMddHHmmss'))
 $ErrorActionPreference = 'Stop'
 
 $here = $PSScriptRoot
-$root = if (Test-Path (Join-Path $here 'kegelliste.html')) { $here } else { Split-Path -Parent $here }
+$root = if ((Test-Path (Join-Path $here 'alleneune.html')) -or (Test-Path (Join-Path $here 'kegelliste.html'))) { $here } else { Split-Path -Parent $here }
 $out  = Join-Path $root 'site'
 
 function Find-File([string]$name, [string[]]$subdirs) {
@@ -20,7 +20,8 @@ if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 New-Item -ItemType Directory -Force (Join-Path $out 'icons') | Out-Null
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
-$page = [IO.File]::ReadAllText((Find-File 'kegelliste.html' @()), $utf8)
+$pageFile = if (Test-Path (Join-Path $root 'alleneune.html')) { 'alleneune.html' } else { 'kegelliste.html' }
+$page = [IO.File]::ReadAllText((Find-File $pageFile @()), $utf8)
 
 $head = @"
 <!doctype html>
@@ -32,7 +33,7 @@ $head = @"
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/favicon-32.png">
-<meta name="apple-mobile-web-app-title" content="Kegelliste">
+<meta name="apple-mobile-web-app-title" content="Alle Neune">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
